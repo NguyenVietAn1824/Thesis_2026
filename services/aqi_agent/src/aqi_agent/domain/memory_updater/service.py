@@ -9,7 +9,7 @@ from aqi_agent.shared.models.memory import QAMemoryPair
 from aqi_agent.shared.models.memory import Question
 from aqi_agent.shared.models.state import ChatwithDBState
 from aqi_agent.shared.settings import MemoryUpdaterSettings
-from litellm import LiteLLMService
+from lite_llm import LiteLLMService
 from logger import get_logger
 from pg import SQLDatabase
 from pg.schema import Conversation

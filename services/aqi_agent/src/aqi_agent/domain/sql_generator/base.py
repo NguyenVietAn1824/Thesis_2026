@@ -8,7 +8,7 @@ from base import BaseService
 from aqi_agent.domain.autocorrector import AutocorrectorService
 from aqi_agent.domain.autocorrector.models import AutocorrectorInput
 from aqi_agent.shared.models.state import ChatwithDBState
-from litellm import LiteLLMService
+from lite_llm import LiteLLMService
 from logger import get_logger
 
 logger = get_logger(__name__)

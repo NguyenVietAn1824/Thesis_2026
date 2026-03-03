@@ -6,10 +6,10 @@ from aqi_agent.shared.models.memory import QAMemoryPair
 from aqi_agent.shared.settings.memory_updater import ConversationTitleGeneratorSettings
 from aqi_agent.shared.utils import qa_message_to_string
 from fastapi.encoders import jsonable_encoder
-from litellm import CompletionMessage
-from litellm import LiteLLMInput
-from litellm import LiteLLMService
-from litellm import MessageRole
+from lite_llm import CompletionMessage
+from lite_llm import LiteLLMInput
+from lite_llm import LiteLLMService
+from lite_llm import MessageRole
 from logger import get_logger
 from pydantic import Field
 

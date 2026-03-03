@@ -7,10 +7,10 @@ from aqi_agent.shared.models.state import PlannerServiceState
 from aqi_agent.shared.models.state import SubTask
 from aqi_agent.shared.settings import PlannerSettings
 from fastapi.encoders import jsonable_encoder
-from litellm import CompletionMessage
-from litellm import LiteLLMInput
-from litellm import LiteLLMService
-from litellm import MessageRole
+from lite_llm import CompletionMessage
+from lite_llm import LiteLLMInput
+from lite_llm import LiteLLMService
+from lite_llm import MessageRole
 from logger import get_logger
 from pydantic import Field
 

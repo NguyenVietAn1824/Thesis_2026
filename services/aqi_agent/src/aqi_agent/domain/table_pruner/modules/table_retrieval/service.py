@@ -5,8 +5,8 @@ from typing import Any
 from base import BaseModel
 from base import BaseService
 from aqi_agent.shared.settings import TablePrunerSettings
-from litellm import LiteLLMEmbeddingInput
-from litellm import LiteLLMService
+from lite_llm import LiteLLMEmbeddingInput
+from lite_llm import LiteLLMService
 from logger import get_logger
 from opensearch import OpenSearchInput
 from opensearch import OpenSearchService

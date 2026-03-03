@@ -7,8 +7,8 @@ from aqi_agent.shared.models import RetrievedExample
 from aqi_agent.shared.models.state import ChatwithDBState
 from aqi_agent.shared.models.state import ExampleRetrievalState
 from aqi_agent.shared.settings import ExampleManagementSettings
-from litellm import LiteLLMEmbeddingInput
-from litellm import LiteLLMService
+from lite_llm import LiteLLMEmbeddingInput
+from lite_llm import LiteLLMService
 from logger import get_logger
 from open_search import AddDocumentInput
 from open_search import OpenSearchInput
