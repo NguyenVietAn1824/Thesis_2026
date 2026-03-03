@@ -3,7 +3,7 @@
         {
             "name": "provinces",
             "properties": {
-                "description": "Provinces table stores province/city level information. Use this to find province names, city-level data, or when the user asks about Hà Nội city information. Contains id (example: 12) and name (example: Hà Nội)."
+                "description": "Provinces table stores province-level administrative information. Use this to find province names or IDs. Contains id (example: 12) and name (example: Hà Nội)."
             },
             "columns": [
                 {
