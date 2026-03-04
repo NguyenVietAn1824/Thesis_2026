@@ -12,7 +12,7 @@ from aqi_agent.shared.settings import MemoryUpdaterSettings
 from lite_llm import LiteLLMService
 from logger import get_logger
 from pg import SQLDatabase
-from pg.schema import Conversation
+from pg.controller.schemas import Conversation
 
 from .conversation_summarizer import ConversationSummarizerInput
 from .conversation_summarizer import ConversationSummarizerService

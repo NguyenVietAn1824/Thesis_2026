@@ -9,3 +9,10 @@ class RedisSettings(BaseModel):
     db: int = 0
     password: str | None = None
     ssl: bool = False
+
+    @property
+    def url(self) -> str:
+        scheme = 'rediss' if self.ssl else 'redis'
+        if self.password:
+            return f'{scheme}://:{self.password}@{self.host}:{self.port}/{self.db}'
+        return f'{scheme}://{self.host}:{self.port}/{self.db}'

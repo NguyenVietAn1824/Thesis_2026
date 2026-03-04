@@ -1,10 +1,6 @@
-"""
-Logger library for KLTN project.
-"""
+from __future__ import annotations
 
-from .logger import StructuredLogger, get_logger
+from .logger import get_logger
+from .logger import setup_logging
 
-__all__ = [
-    "StructuredLogger",
-    "get_logger",
-]
+__all__ = ['setup_logging', 'get_logger']

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 from base import BaseModel
 from fastapi import status
 from fastapi.responses import JSONResponse
-from structlog.stdlib import BoundLogger
 
 
 class ResponseMessage(str, Enum):
@@ -21,7 +20,7 @@ class ResponseMessage(str, Enum):
 
 
 class ExceptionHandler(BaseModel):
-    logger: BoundLogger
+    logger: Any
     service_name: str
 
     def _create_message(self, e: str) -> str:

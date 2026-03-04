@@ -11,6 +11,7 @@ volumes:
       type: none
       device: data/opensearch/
       o: bind
+  redis_insight_data:
 
 services:
   postgres:
@@ -92,4 +93,119 @@ services:
     environment:
       - GEMINI_API_KEY1=${GEMINI_API_KEY1}
 
+  redis:
+    image: redis/redis-stack-server:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - app-tier
+    volumes:
+      - ./data/redis:/data
+    command: redis-stack-server --appendonly yes
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  redis-insight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    networks:
+      - app-tier
+    volumes:
+      - redis_insight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+    environment:
+      - RI_APP_PORT=5540
+
+  chatwithdb_service:
+    build:
+      context: .
+      dockerfile: devops/Dockerfile
+      args:
+        - PACKAGE=chatwithdb
+        - OPTIONAL_BUILD=src/chatwithdb/__init__.py
+    command: ["uv", "run", "--no-sync", "chatwithdb"]
+    ports:
+      - "3333:3333"
+    networks:
+      - app-tier
+    volumes:
+      - type: bind
+        source: ./chatwithdb/
+        target: /home/sunbot/app/services/chatwithdb/
+      - type: bind
+        source: ./libs/
+        target: /home/sunbot/app/libs/
+    environment:
+      - LITELLM__TOKEN=${LITELLM__TOKEN}
+      - LITELLM__URL=http://litellm_service:4000
+      - POSTGRES__USERNAME=${POSTGRES__USERNAME}
+      - POSTGRES__PASSWORD=${POSTGRES__PASSWORD}
+      - POSTGRES__HOST=postgres
+      - POSTGRES__DB=${POSTGRES__DB}
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+      - OPENSEARCH__HOST=opensearch
+      - OPENSEARCH__PORT=9200
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+      - PORT=3333
+      - HOST=0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+  aqi_agent_service:
+    build:
+      context: .
+      dockerfile: devops/Dockerfile
+      args:
+        - PACKAGE=aqi-agent
+        - OPTIONAL_BUILD=src/aqi_agent/__init__.py
+    command: ["uv", "run", "--no-sync", "aqi_agent"]
+    ports:
+      - "3334:3334"
+    networks:
+      - app-tier
+    volumes:
+      - type: bind
+        source: ./services/aqi_agent/
+        target: /home/sunbot/app/services/aqi_agent/
+      - type: bind
+        source: ./libs/
+        target: /home/sunbot/app/libs/
+    environment:
+      - LITELLM__TOKEN=${LITELLM__TOKEN}
+      - LITELLM__URL=http://litellm_service:4000
+      - POSTGRES__USERNAME=${POSTGRES__USERNAME}
+      - POSTGRES__PASSWORD=${POSTGRES__PASSWORD}
+      - POSTGRES__HOST=postgres
+      - POSTGRES__DB=${POSTGRES__DB}
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+      - OPENSEARCH__HOST=opensearch
+      - OPENSEARCH__PORT=9200
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+      - PORT=3334
+      - HOST=0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always

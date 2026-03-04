@@ -8,6 +8,7 @@ from aqi_agent.application.service import AQIAgentInput
 from aqi_agent.application.service import AQIAgentOutput
 from aqi_agent.shared.exception import UnauthorizedException
 from aqi_agent.shared.exception import ValidationException
+from aqi_agent.shared.utils import get_resources
 from aqi_agent.shared.utils import get_settings
 from fastapi import APIRouter
 from fastapi import BackgroundTasks
@@ -37,12 +38,47 @@ async def aqi_agent(
     )
 
     try:
+        resources = get_resources(request)
         aqi_agent_application = AQIAgentApplication(
-            request=request,
+            resources=resources,
         )
     except Exception as e:
         return exception_handler.handle_exception(
             e=f'Error during application initialization: {e!s}',
+            extra={},
+        )
+
+    # Validate required inputs
+    try:
+        if not inputs.question:
+            return exception_handler.handle_bad_request(
+                message='Question is required',
+                extra={'conversation_id': inputs.conversation_id},
+            )
+        if not inputs.conversation_id:
+            return exception_handler.handle_bad_request(
+                message='Conversation ID is required',
+                extra={'question': inputs.question},
+            )
+        if not inputs.user_id:
+            return exception_handler.handle_bad_request(
+                message='User ID is required',
+                extra={'question': inputs.question},
+            )
+        else:
+            with resources.sql_database.get_session() as session:
+                user = resources.sql_database.get_user_by_id(
+                    session,
+                    inputs.user_id,
+                )
+            if not user:
+                return exception_handler.handle_unauthorized_error(
+                    message='Invalid user_id',
+                    extra={'question': inputs.question},
+                )
+    except Exception as e:
+        return exception_handler.handle_exception(
+            e=f'Error during user_id validation: {e!s}',
             extra={},
         )
 

@@ -57,13 +57,49 @@ class SQLExecutionHandlerService(BaseService):
         return SQLExecutionHandlerOutput(execution_result=execution_result, error_message=None, number_of_rows=number_of_rows)
 
     async def gprocess(self, state: ChatwithDBState) -> dict:
-        """Wrapper method for executing SQL within the LangGraph state graph."""
+        """Wrapper method for executing SQL within the LangGraph state graph.
+
+        Extracts necessary information from the state and returns the execution result.
+        Tracks retry count and checks max retry limit.
+
+        Args:
+            state: The ChatwithDBState containing the SQL query to execute.
+        Returns:
+            dict: Dictionary containing 'sql_execution_state' with the execution results.
+        """
         try:
             sql_query = state.get('sql_validator_state', {}).get('sanitized_query', '')
 
+            # Get current retry count and increment if there was a previous error
+            current_retry_count = state.get('sql_execution_state', {}).get('retry_count', 0)
+            previous_error = state.get('sql_execution_state', {}).get('error_message', '')
+
+            # Increment retry count if this is a retry
+            if previous_error:
+                current_retry_count += 1
+
+            # Check if max retries exceeded
+            if current_retry_count > self.settings.max_fix_retries:
+                logger.warning(
+                    f'SQL fix retry limit exceeded ({current_retry_count}/{self.settings.max_fix_retries}). Stopping fix attempts.',
+                    extra={
+                        'retry_count': current_retry_count,
+                        'max_retries': self.settings.max_fix_retries,
+                    },
+                )
+                return {
+                    'sql_execution_state': SQLExecutionState(
+                        execution_result=None,
+                        error_message=previous_error,
+                        number_of_rows=None,
+                        retry_count=current_retry_count,
+                        exceeded_max_retries=True,
+                    ),
+                }
+
             execution_results = await self.process(
                 inputs=SQLExecutionHandlerInput(
-                    sql_query=sql_query,
+                    sql_query=sql_query if sql_query else '',
                 ),
             )
 
@@ -72,6 +108,8 @@ class SQLExecutionHandlerService(BaseService):
                     execution_result=execution_results.execution_result,
                     error_message=execution_results.error_message,
                     number_of_rows=execution_results.number_of_rows,
+                    retry_count=current_retry_count,
+                    exceeded_max_retries=False,
                 ),
             }
         except Exception as e:
@@ -84,5 +122,7 @@ class SQLExecutionHandlerService(BaseService):
                     execution_result=None,
                     error_message=SQLExecutionMessage.UNEXPECTED_ERROR.value.format(error_message=str(e)),
                     number_of_rows=None,
+                    retry_count=0,
+                    exceeded_max_retries=False,
                 ),
             }

@@ -11,7 +11,7 @@ from aqi_agent.shared.settings.history_retrieval import HistoryRetrievalSettings
 from fastapi.encoders import jsonable_encoder
 from logger import get_logger
 from pg import SQLDatabase
-from pg.models import Message as MessageModel
+from pg.model import Message as MessageModel
 
 logger = get_logger(__name__)
 
@@ -64,7 +64,7 @@ class HistoryRetrievalService(BaseService):
             messages = self.sql_database.get_messages(
                 session=session,
                 filter={'conversation_id': conversation_id},
-                order_by=[MessageModel.createdAt.desc()],
+                order_by=[MessageModel.created_at.desc()],
                 limit=self.settings.n_turns,
             )
 

@@ -6,14 +6,21 @@ from functools import lru_cache
 
 from aqi_agent.shared.models.memory import QAMemoryPair
 from aqi_agent.shared.settings import Settings
+from fastapi.requests import Request
 from logger import get_logger
+
+from .resources import Resources
 
 logger = get_logger(__name__)
 
 
 @lru_cache
 def get_settings():
-    return Settings()
+    return Settings()  # type: ignore
+
+
+def get_resources(request: Request) -> Resources:
+    return request.app.state.resources
 
 
 def qa_message_to_string(messages: list[QAMemoryPair] | None):

@@ -117,10 +117,12 @@ answer_generator:
 
 sql_execution:
   max_rows: 50
+  max_fix_retries: 3
 
 autocorrector:
   redis_key_prefix: "frequent_values"
   fuzzy_threshold: 85
+  min_len_ratio: 0.6
   max_fuzzy_matches: 5
 
 memory_updater:

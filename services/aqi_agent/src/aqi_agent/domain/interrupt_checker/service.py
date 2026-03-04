@@ -5,7 +5,7 @@ from base import BaseService
 from aqi_agent.shared.models.state import ChatwithDBState
 from logger import get_logger
 from pg import SQLDatabase
-from pg.schema import Conversation
+from pg.controller.schemas import Conversation
 
 logger = get_logger(__name__)
 

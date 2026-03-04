@@ -1,26 +1,32 @@
 [project]
 name = "aqi-agent"
 version = "1.0.0"
-description = "Air Quality Index question answering service using Text2GraphQL"
+description = "Air Quality Index question answering service using Text2SQL"
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.100.0",
-    "uvicorn[standard]>=0.23.0",
-    "httpx>=0.24.0",
-    "pydantic>=2.0.0",
-    "langgraph>=0.2.0",
-    "langchain>=0.2.0",
-    "langchain-core>=0.2.0",
+    "asgi-correlation-id>=4.2.0",
     "base",
+    "easydict>=1.13",
+    "fastapi>=0.109.1",
+    "langgraph>=0.3.5",
+    "langgraph-checkpoint-redis>=0.0.5",
     "lite-llm",
     "logger",
+    "opensearch",
     "pg",
-    "streamlit>=1.53.0",
-    "requests>=2.32.5",
-    "pandas>=2.3.3",
-    "easydict>=1.13",
-    "python-dotenv>=1.2.1",
+    "pydantic-settings>=2.9.1",
+    "rapidfuzz>=3.14.3",
+    "redis>=5.0.0",
+    "simpleeval>=1.0.3",
+    "sqlglot>=29.0.1",
+    "sqlparse>=0.4.4",
+    "structlog>=25.0.0",
+    "uvicorn[standard]>=0.23.0",
 ]
+
+[project.scripts]
+aqi_agent = "aqi_agent:main"
 
 [project.optional-dependencies]
 dev = [
@@ -31,23 +37,12 @@ dev = [
 ]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/aqi_agent"]
+requires = ["uv_build>=0.9.14,<0.11.0"]
+build-backend = "uv_build"
 
 [tool.uv.sources]
 base = { workspace = true }
 lite-llm = { workspace = true }
 logger = { workspace = true }
 pg = { workspace = true }
-
-[tool.black]
-line-length = 88
-target-version = ["py311"]
-
-[tool.ruff]
-line-length = 88
-target-version = "py311"
-select = ["E", "F", "I", "N", "W"]
+opensearch = { workspace = true }

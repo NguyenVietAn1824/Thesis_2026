@@ -27,6 +27,9 @@ class HumanInterventInput(BaseModel):
     planning_summary: str | None = None
     conversation_summary: str | None = None
     conversation_memories: list[dict] | None = None
+    sql_validator_error: str | None = None
+    sql_execution_exceeded_max_retries: bool | None = None
+    no_relevant_schema: bool | None = None
 
 
 class HumanInterventOutput(BaseModel):
@@ -83,6 +86,9 @@ class HumanInterventService(BaseService):
                         conversation_history=conversation_history,
                         rephrase_question=inputs.rephrase_question,
                         planning_summary=inputs.planning_summary or '',
+                        sql_validator_error=inputs.sql_validator_error or '',
+                        sql_execution_exceeded_max_retries=str(inputs.sql_execution_exceeded_max_retries or False).lower(),
+                        no_relevant_schema=str(inputs.no_relevant_schema or False).lower(),
                     ),
                 ),
             ]
@@ -114,11 +120,28 @@ class HumanInterventService(BaseService):
         )
 
     async def gprocess(self, state: ChatwithDBState) -> dict:
-        """Wrapper method for executing human intervention within the LangGraph state graph."""
+        """Wrapper method for executing human intervention within the LangGraph state graph.
+
+        Extracts necessary information from the state and returns the generated answer.
+
+        Args:
+            state: The ChatwithDBState containing conversation context.
+
+        Returns:
+            dict: Dictionary containing human_intervent_state with the answer.
+        """
         try:
             rephrased_state = state.get('rephrased_state', {})
             history_state = state.get('history_retrieval_state', {})
             planner_state = state.get('planner_state', {})
+            sql_validator_state = state.get('sql_validator_state', {})
+
+            need_context = rephrased_state.get('need_context', False)
+            no_relevant_schema = (
+                need_context
+                and not state.get('table_pruner_state', {}).get('pruned_schema', '')
+                and not state.get('example_retrieval_state', {}).get('examples', [])
+            )
 
             output = await self.process(
                 HumanInterventInput(
@@ -127,6 +150,9 @@ class HumanInterventService(BaseService):
                     conversation_summary=history_state.get('conversation_summary'),
                     conversation_memories=history_state.get('conversation_memories'),
                     planning_summary=planner_state.get('planning_summary'),
+                    sql_validator_error=sql_validator_state.get('error_message') if sql_validator_state.get('is_valid') is False else None,
+                    sql_execution_exceeded_max_retries=state.get('sql_execution_state', {}).get('exceeded_max_retries', False),
+                    no_relevant_schema=no_relevant_schema,
                 ),
             )
 
@@ -178,6 +204,9 @@ class HumanInterventService(BaseService):
                         conversation_history=conversation_history,
                         rephrase_question=inputs.rephrase_question,
                         planning_summary=inputs.planning_summary or '',
+                        sql_validator_error=inputs.sql_validator_error or '',
+                        sql_execution_exceeded_max_retries=str(inputs.sql_execution_exceeded_max_retries or False).lower(),
+                        no_relevant_schema=str(inputs.no_relevant_schema or False).lower(),
                     ),
                 ),
             ]

@@ -6,6 +6,7 @@ import uvicorn
 from asgi_correlation_id import CorrelationIdMiddleware
 from aqi_agent.api.helpers import LoggingMiddleware
 from aqi_agent.api.routers.manager import api_router
+from aqi_agent.shared.resources import Resources
 from aqi_agent.shared.utils import get_settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,7 +17,7 @@ from opensearch import OpenSearchService
 from pg import SQLDatabase
 from redis import Redis  # type: ignore[import-untyped]
 
-setup_logging(json_logs=False)
+setup_logging(json_logs=False, include_modules=['aqi_agent', 'api'])
 logger = get_logger('api')
 
 settings = get_settings()
@@ -24,31 +25,29 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.settings = settings
-
-    app.state.litellm_service = LiteLLMService(
-        settings=app.state.settings.litellm,
+    app.state.resources = Resources(
+        settings=settings,
+        litellm_service=LiteLLMService(
+            settings=settings.litellm,
+        ),
+        sql_database=SQLDatabase(
+            username=settings.postgres.username,
+            password=settings.postgres.password,
+            host=settings.postgres.host,
+            port=settings.postgres.port,
+            db=settings.postgres.db,
+        ),
+        opensearch_service=OpenSearchService(
+            settings=settings.opensearch,
+        ),
+        redis_client=Redis(
+            host=settings.redis.host,
+            port=settings.redis.port,
+            db=settings.redis.db,
+            password=settings.redis.password,
+            ssl=settings.redis.ssl,
+        ),
     )
-
-    app.state.sql_database = SQLDatabase(
-        username=app.state.settings.postgres.username,
-        password=app.state.settings.postgres.password,
-        host=app.state.settings.postgres.host,
-        db=app.state.settings.postgres.db,
-    )
-
-    app.state.opensearch_service = OpenSearchService(
-        settings=app.state.settings.opensearch,
-    )
-
-    app.state.redis_client = Redis(
-        host=app.state.settings.redis.host,
-        port=app.state.settings.redis.port,
-        db=app.state.settings.redis.db,
-        password=app.state.settings.redis.password,
-        ssl=app.state.settings.redis.ssl,
-    )
-
     yield
 
 

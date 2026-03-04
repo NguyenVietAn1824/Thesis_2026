@@ -12,6 +12,7 @@ from .memory_updater import MemoryUpdaterSettings
 from .planner import PlannerSettings
 from .redis import RedisSettings
 from .rephrase_question import RephraseQuestionSettings
+from .settings import Settings
 from .sql_execution import SQLExecutionSettings
 from .sql_generator import MatchSQLGeneratorSettings
 from .sql_generator import MismatchSQLGeneratorSettings
@@ -19,6 +20,7 @@ from .sql_generator import SQLGeneratorSettings
 from .table_pruner import TablePrunerSettings
 
 __all__ = [
+    'Settings',
     'AnswerGeneratorSettings',
     'AutocorrectorSettings',
     'FixSQLAgentSettings',

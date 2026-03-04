@@ -118,10 +118,14 @@ class SQLExecutionState(TypedDict):
         execution_result: The result of the SQL execution if successful.
         error_message: Error message if the SQL execution failed.
         number_of_rows: Number of rows returned by the SQL execution, if applicable.
+        retry_count: Counter for SQL fix retry attempts.
+        exceeded_max_retries: Flag indicating if max retries has been exceeded.
     """
     execution_result: str | None
     error_message: str | None
     number_of_rows: int | None
+    retry_count: int
+    exceeded_max_retries: bool
 
 
 class FixSQLAgentState(TypedDict):

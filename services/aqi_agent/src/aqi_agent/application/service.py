@@ -33,9 +33,9 @@ from aqi_agent.shared.models.state import SQLExecutionState
 from aqi_agent.shared.models.state import SQLGeneratorState
 from aqi_agent.shared.models.state import SQLValidatorState
 from aqi_agent.shared.models.state import TablePrunerState
+from aqi_agent.shared.resources import Resources
 from easydict import EasyDict
 from fastapi import BackgroundTasks
-from fastapi import Request
 from fastapi.encoders import jsonable_encoder
 from langgraph.graph import END
 from langgraph.graph import START
@@ -58,86 +58,86 @@ class AQIAgentOutput(BaseModel):
 
 class AQIAgentApplication(BaseService):
 
-    request: Request
+    resources: Resources
 
     @property
     def interrupt_checker_service(self) -> InterruptCheckerService:
         return InterruptCheckerService(
-            sql_database=self.request.app.state.sql_database,
+            sql_database=self.resources.sql_database,
         )
 
     @property
     def rephrase_service(self) -> RephraseService:
         return RephraseService(
-            litellm_service=self.request.app.state.litellm_service,
-            settings=self.request.app.state.settings.rephrase_question,
+            litellm_service=self.resources.litellm_service,
+            settings=self.resources.settings.rephrase_question,
         )
 
     @property
     def history_retrieval_service(self) -> HistoryRetrievalService:
         return HistoryRetrievalService(
-            sql_database=self.request.app.state.sql_database,
-            settings=self.request.app.state.settings.history_retrieval,
+            sql_database=self.resources.sql_database,
+            settings=self.resources.settings.history_retrieval,
         )
 
     @property
     def table_pruner_service(self) -> TablePrunerService:
         return TablePrunerService(
-            opensearch_service=self.request.app.state.opensearch_service,
-            litellm_service=self.request.app.state.litellm_service,
-            table_pruner_settings=self.request.app.state.settings.table_pruner,
+            opensearch_service=self.resources.opensearch_service,
+            litellm_service=self.resources.litellm_service,
+            table_pruner_settings=self.resources.settings.table_pruner,
         )
 
     @property
     def example_management_service(self) -> ExampleManagementService:
         return ExampleManagementService(
-            opensearch_service=self.request.app.state.opensearch_service,
-            litellm_service=self.request.app.state.litellm_service,
-            settings=self.request.app.state.settings.example_management,
+            opensearch_service=self.resources.opensearch_service,
+            litellm_service=self.resources.litellm_service,
+            settings=self.resources.settings.example_management,
         )
 
     @property
     def planner_service(self) -> PlannerService:
         return PlannerService(
-            litellm_service=self.request.app.state.litellm_service,
-            settings=self.request.app.state.settings.planner,
+            litellm_service=self.resources.litellm_service,
+            settings=self.resources.settings.planner,
         )
 
     @property
     def human_intervent_service(self) -> HumanInterventService:
         return HumanInterventService(
-            litellm_service=self.request.app.state.litellm_service,
-            settings=self.request.app.state.settings.human_intervent,
+            litellm_service=self.resources.litellm_service,
+            settings=self.resources.settings.human_intervent,
         )
 
     @property
     def autocorrector_service(self) -> AutocorrectorService:
         return AutocorrectorService(
-            redis_client=self.request.app.state.redis_client,
-            settings=self.request.app.state.settings.autocorrector,
+            redis_client=self.resources.redis_client,
+            settings=self.resources.settings.autocorrector,
         )
 
     @property
     def match_sql_generator_service(self) -> MatchSQLGeneratorService:
         return MatchSQLGeneratorService(
-            litellm_service=self.request.app.state.litellm_service,
+            litellm_service=self.resources.litellm_service,
             autocorrector_service=self.autocorrector_service,
-            settings=self.request.app.state.settings.match_sql_generator,
+            settings=self.resources.settings.match_sql_generator,
         )
 
     @property
     def mismatch_sql_generator_service(self) -> MismatchSQLGeneratorService:
         return MismatchSQLGeneratorService(
-            litellm_service=self.request.app.state.litellm_service,
+            litellm_service=self.resources.litellm_service,
             autocorrector_service=self.autocorrector_service,
-            settings=self.request.app.state.settings.mismatch_sql_generator,
+            settings=self.resources.settings.mismatch_sql_generator,
         )
 
     @property
     def answer_generator_service(self) -> AnswerGeneratorService:
         return AnswerGeneratorService(
-            litellm_service=self.request.app.state.litellm_service,
-            settings=self.request.app.state.settings.answer_generator,
+            litellm_service=self.resources.litellm_service,
+            settings=self.resources.settings.answer_generator,
         )
 
     @property
@@ -147,23 +147,23 @@ class AQIAgentApplication(BaseService):
     @property
     def sql_execution_handler_service(self) -> SQLExecutionHandlerService:
         return SQLExecutionHandlerService(
-            sql_database=self.request.app.state.sql_database,
-            settings=self.request.app.state.settings.sql_execution,
+            sql_database=self.resources.sql_database,
+            settings=self.resources.settings.sql_execution,
         )
 
     @property
     def fixsql_agent_service(self) -> FixSQLService:
         return FixSQLService(
-            litellm_service=self.request.app.state.litellm_service,
-            settings=self.request.app.state.settings.fixsql_agent,
+            litellm_service=self.resources.litellm_service,
+            settings=self.resources.settings.fixsql_agent,
         )
 
     @property
     def memory_updater_service(self) -> MemoryUpdaterService:
         return MemoryUpdaterService(
-            sql_database=self.request.app.state.sql_database,
-            settings=self.request.app.state.settings.memory_updater,
-            litellm_service=self.request.app.state.litellm_service,
+            sql_database=self.resources.sql_database,
+            settings=self.resources.settings.memory_updater,
+            litellm_service=self.resources.litellm_service,
         )
 
     def join_nodes(self, state: ChatwithDBState) -> ChatwithDBState:
@@ -271,16 +271,21 @@ class AQIAgentApplication(BaseService):
                     len(state.get('example_retrieval_state', {}).get('examples', [])),
                 )
                 return 'match_sql_generator'
-            logger.info('No examples found, proceeding to Think and Generate pipeline.')
-            return 'planner'
+            elif state.get('table_pruner_state', {}).get('pruned_schema', ''):
+                logger.info('No examples found but pruned schema is available, proceeding to Think and Generate pipeline.')
+                return 'planner'
 
-        # join_nodes -> match_sql_generator | planner
+            logger.warning('No examples and no pruned schema found, proceeding to human intervention for clarification.')
+            return 'human_intervent'
+
+        # join_nodes -> match_sql_generator | planner | human_intervent
         graph.add_conditional_edges(
             'join_nodes',
             generate_mode_route,
             {
                 'match_sql_generator': 'match_sql_generator',
                 'planner': 'planner',
+                'human_intervent': 'human_intervent',
             },
         )
 
@@ -326,18 +331,26 @@ class AQIAgentApplication(BaseService):
 
         def route_sql_execution(
             state: ChatwithDBState,
-        ) -> Literal['fixsql_agent', 'answer_generator']:
-            if state.get('sql_execution_state', {}).get('error_message', ''):
+        ) -> Literal['fixsql_agent', 'answer_generator', 'human_intervent']:
+            sql_execution_state = state.get('sql_execution_state', {})
+
+            # Check if max retries exceeded first
+            if sql_execution_state.get('exceeded_max_retries', False):
+                logger.warning('SQL fix retry limit exceeded. Navigating to human_intervent.')
+                return 'human_intervent'
+
+            if sql_execution_state.get('error_message', ''):
                 return 'fixsql_agent'
             return 'answer_generator'
 
-        # sql_execution_handler -> critic_agent | answer_generator
+        # sql_execution_handler -> fixsql_agent | answer_generator | human_intervent
         graph.add_conditional_edges(
             'sql_execution_handler',
             route_sql_execution,
             {
                 'fixsql_agent': 'fixsql_agent',
                 'answer_generator': 'answer_generator',
+                'human_intervent': 'human_intervent',
             },
         )
 
@@ -400,6 +413,8 @@ class AQIAgentApplication(BaseService):
                 execution_result=None,
                 error_message=None,
                 number_of_rows=None,
+                retry_count=0,
+                exceeded_max_retries=False,
             ),
             fixsql_agent_state=FixSQLAgentState(
                 error_explanation='',
@@ -446,7 +461,14 @@ class AQIAgentApplication(BaseService):
 
         need_context = graph_output.get('rephrased_state', {}).get('need_context', False)
         requires_clarification = graph_output.get('planner_state', {}).get('requires_clarification', False)
-        if not need_context or requires_clarification:
+        exceeded_max_retries = graph_output.get('sql_execution_state', {}).get('exceeded_max_retries', False)
+        no_relevant_schema = (
+            need_context
+            and not graph_output.get('table_pruner_state', {}).get('pruned_schema', '')
+            and not graph_output.get('example_retrieval_state', {}).get('examples', [])
+        )
+
+        if not need_context or requires_clarification or exceeded_max_retries or no_relevant_schema:
             response = graph_output.get('human_intervent_state', {}).get('answer', '')
         elif need_context:
             response = graph_output.get('answer_generator_state', {}).get('answer', '')
