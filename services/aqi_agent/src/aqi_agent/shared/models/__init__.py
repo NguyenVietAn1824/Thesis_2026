@@ -18,13 +18,14 @@ from .state import SQLGeneratorState
 from .state import SQLValidatorState
 from .state import SubTask
 from .state import TablePrunerState
-
+from .correction import Correction
 __all__ = [
     'QAMemoryPair',
     'Question',
     'Answer',
     'Example',
     'RetrievedExample',
+    'Correction',
     'AnswerGeneratorState',
     'FixSQLAgentState',
     'PlannerServiceState',

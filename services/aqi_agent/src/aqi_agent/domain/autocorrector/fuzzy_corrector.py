@@ -4,11 +4,12 @@ import unicodedata
 
 import sqlglot
 from base import BaseService
+from aqi_agent.shared.models import Correction
 from aqi_agent.shared.settings import AutocorrectorSettings
 from logger import get_logger
 from rapidfuzz import fuzz
 from rapidfuzz import process
-from redis import Redis  # type: ignore[import-untyped]
+from redis import Redis 
 from sqlglot import exp
 from sqlglot.errors import ParseError
 
@@ -149,7 +150,6 @@ class FuzzyCorrectorService(BaseService):
         query_value: str,
         cached_values: list[str],
         threshold: int,
-        min_len_ratio: float | None,
         max_matches: int | None,
     ) -> list[str]:
         """Perform fuzzy matching of a query value against a list of cached values.
@@ -158,8 +158,6 @@ class FuzzyCorrectorService(BaseService):
             query_value: The value to match.
             cached_values: List of candidate values from cache.
             threshold: Minimum similarity score (0-100) to include a match.
-            min_len_ratio: Minimum length ratio (0-1) for fuzzy match validity.
-                Protects against substring false positives.
             max_matches: Maximum number of matches to return, or None for unlimited.
 
         Returns:
@@ -171,7 +169,7 @@ class FuzzyCorrectorService(BaseService):
 
             query_normalized = self._remove_accents(query_value.lower().strip())
 
-            normalized_cache_map = {}
+            normalized_cache_map: dict[str, str] = {}
             for val in cached_values:
                 norm_val = self._remove_accents(val.lower().strip())
                 if norm_val not in normalized_cache_map:
@@ -182,17 +180,18 @@ class FuzzyCorrectorService(BaseService):
             results = process.extract(
                 query_normalized,
                 normalized_cached_list,
-                scorer=fuzz.WRatio,
+                scorer=fuzz.WRatio if len(query_normalized) > 5 else fuzz.QRatio,
                 limit=max_matches,
                 score_cutoff=threshold,
             )
+
+            min_len_ratio = self.settings.min_len_ratio
             final_matches = []
             for match_str, _, _ in results:
                 len_ratio = min(len(match_str), len(query_normalized)) / max(len(match_str), len(query_normalized), 1)
-                if min_len_ratio is not None and len_ratio < min_len_ratio:
+                if len_ratio < min_len_ratio:
                     continue
-                original_val = normalized_cache_map[match_str]
-                final_matches.append(original_val)
+                final_matches.append(normalized_cache_map[match_str])
 
             return final_matches
         except Exception:
@@ -253,7 +252,7 @@ class FuzzyCorrectorService(BaseService):
                 result.append(expr)
         return result
 
-    def _unwrap_operand(self, node: exp.Expression) -> exp.Column | None:
+    def _unwrap_column(self, node: exp.Expression) -> exp.Column | None:
         """Unwrap a potentially function-wrapped column reference.
 
         Handles cases like LOWER(col), UPPER(col), TRIM(col) by extracting
@@ -298,6 +297,9 @@ class FuzzyCorrectorService(BaseService):
     ) -> list[dict]:
         """Extract WHERE column = 'string_literal' conditions from the SQL AST.
 
+        Handles reversed operands (``'value' = column``) and function-wrapped
+        columns/literals (e.g. ``LOWER(col) = LOWER('val')``).
+
         Args:
             expression: A sqlglot Expression representing the parsed SQL query.
 
@@ -315,14 +317,16 @@ class FuzzyCorrectorService(BaseService):
                 left = eq_node.left
                 right = eq_node.right
 
-                left_literal = self._unwrap_literal(left)
-                if left_literal is not None and self._unwrap_operand(right) is not None:
+                # Handle reversed operands: 'Value' = column (bare or wrapped)
+                if self._unwrap_literal(left) is not None and self._unwrap_column(right) is not None:
                     left, right = right, left
 
-                column = self._unwrap_operand(left)
+                # Unwrap function-wrapped column (e.g. LOWER(col), UPPER(col), TRIM(col))
+                column = self._unwrap_column(left)
                 if column is None:
                     continue
 
+                # Unwrap function-wrapped literal on value side (e.g. LOWER('val'))
                 literal = self._unwrap_literal(right)
                 if literal is None:
                     continue
@@ -347,7 +351,8 @@ class FuzzyCorrectorService(BaseService):
         """Extract WHERE column IN ('val1', 'val2', ...) conditions from the SQL AST.
 
         Only extracts IN conditions where the column is a direct column reference
-        and the IN list contains at least one string literal (not a subquery).
+        (or function-wrapped) and the IN list contains at least one string literal
+        (not a subquery).
 
         Args:
             expression: A sqlglot Expression representing the parsed SQL query.
@@ -364,7 +369,7 @@ class FuzzyCorrectorService(BaseService):
 
             for in_node in where.find_all(exp.In):
                 # Unwrap function-wrapped columns (e.g. LOWER(col), UPPER(col), TRIM(col))
-                column = self._unwrap_operand(in_node.this)
+                column = self._unwrap_column(in_node.this)
                 if column is None:
                     continue
 
@@ -397,9 +402,8 @@ class FuzzyCorrectorService(BaseService):
         conditions: list[dict],
         table_mapping: dict[str, str],
         fuzzy_threshold: int,
-        min_len_ratio: float | None,
         max_matches: int | None,
-    ) -> None:
+    ) -> list[Correction]:
         """Apply fuzzy correction to WHERE column = 'value' conditions in-place.
 
         Args:
@@ -407,11 +411,14 @@ class FuzzyCorrectorService(BaseService):
                 ``_extract_where_equality_conditions``.
             table_mapping: Dict mapping alias/tables from ``_extract_table_mapping``.
             fuzzy_threshold: Minimum similarity score to accept a match.
-            min_len_ratio: Minimum length ratio (0-1) for fuzzy match validity.
-                Protects against substring false positives.
             max_matches: Maximum number of replacement values per condition.
+
+        Returns:
+            List of corrections applied.
         """
         try:
+            corrections: list[Correction] = []
+
             for cond in conditions:
                 column: exp.Column = cond['column']
                 original_value: str = cond['value']
@@ -421,7 +428,7 @@ class FuzzyCorrectorService(BaseService):
                 if not unique_cached or original_value in unique_cached:
                     continue
 
-                matches = self._fuzzy_match(original_value, unique_cached, fuzzy_threshold, min_len_ratio, max_matches)
+                matches = self._fuzzy_match(original_value, unique_cached, fuzzy_threshold, max_matches)
                 if not matches:
                     continue
 
@@ -437,6 +444,9 @@ class FuzzyCorrectorService(BaseService):
                     )
 
                 eq_node.replace(new_node)
+                corrections.append(Correction(original_value=original_value, corrected_values=matches))
+
+            return corrections
         except Exception:
             logger.exception(
                 'Failed to process EQ conditions for fuzzy correction.',
@@ -449,9 +459,8 @@ class FuzzyCorrectorService(BaseService):
         conditions: list[dict],
         table_mapping: dict[str, str],
         fuzzy_threshold: int,
-        min_len_ratio: float | None,
         max_matches: int | None,
-    ) -> None:
+    ) -> list[Correction]:
         """Apply fuzzy correction to WHERE column IN (...) conditions in-place.
 
         Args:
@@ -459,11 +468,14 @@ class FuzzyCorrectorService(BaseService):
                 ``_extract_where_in_conditions``.
             table_mapping: Dict mapping alias/tables from ``_extract_table_mapping``.
             fuzzy_threshold: Minimum similarity score to accept a match.
-            min_len_ratio: Minimum length ratio (0-1) for fuzzy match validity.
-                Protects against substring false positives.
             max_matches: Maximum number of replacement values per original value.
+
+        Returns:
+            List of corrections applied.
         """
         try:
+            corrections: list[Correction] = []
+
             for cond in conditions:
                 column: exp.Column = cond['column']
                 in_node: exp.In = cond['in_node']
@@ -485,9 +497,10 @@ class FuzzyCorrectorService(BaseService):
                         new_expressions.append(item_expr.copy())
                         continue
 
-                    matches = self._fuzzy_match(original_value, unique_cached, fuzzy_threshold, min_len_ratio, max_matches)
+                    matches = self._fuzzy_match(original_value, unique_cached, fuzzy_threshold, max_matches)
                     if matches:
                         new_expressions.extend(exp.Literal.string(m) for m in matches)
+                        corrections.append(Correction(original_value=original_value, corrected_values=matches))
                         changed = True
                     else:
                         new_expressions.append(item_expr.copy())
@@ -500,11 +513,10 @@ class FuzzyCorrectorService(BaseService):
                     expressions=self._deduplicate_expressions(new_expressions),
                 )
                 in_node.replace(new_in_node)
+
+            return corrections
         except Exception:
-            logger.exception(
-                'Failed to process IN conditions for fuzzy correction.',
-                extra={'conditions': conditions},
-            )
+            logger.exception('Failed to process IN conditions for fuzzy correction.')
             raise
 
     def process(self, input: AutocorrectorInput) -> AutocorrectorOutput:
@@ -514,7 +526,7 @@ class FuzzyCorrectorService(BaseService):
             input: AutocorrectorInput containing the SQL query to correct.
 
         Returns:
-            AutocorrectorOutput with the corrected SQL query.
+            AutocorrectorOutput with the corrected SQL query and list of corrections.
         """
         sql_query = input.sql_query
         if not sql_query or not sql_query.strip():
@@ -529,8 +541,8 @@ class FuzzyCorrectorService(BaseService):
             return AutocorrectorOutput(corrected_sql_query=sql_query)
 
         fuzzy_threshold = self.settings.fuzzy_threshold
-        min_len_ratio = self.settings.min_len_ratio
         max_matches = self.settings.max_fuzzy_matches
+        all_corrections: list[Correction] = []
 
         for expression in parsed_statements:
             if expression is None:
@@ -538,10 +550,22 @@ class FuzzyCorrectorService(BaseService):
             table_mapping = self._extract_table_mapping(expression)
             eq_conditions = self._extract_where_equality_conditions(expression)
             in_conditions = self._extract_where_in_conditions(expression)
-            self._process_eq_conditions(eq_conditions, table_mapping, fuzzy_threshold, min_len_ratio, max_matches)
-            self._process_in_conditions(in_conditions, table_mapping, fuzzy_threshold, min_len_ratio, max_matches)
+            all_corrections += self._process_eq_conditions(eq_conditions, table_mapping, fuzzy_threshold, max_matches)
+            all_corrections += self._process_in_conditions(in_conditions, table_mapping, fuzzy_threshold, max_matches)
 
         corrected_sql = '; '.join(
             expr.sql() for expr in parsed_statements if expr is not None
         )
-        return AutocorrectorOutput(corrected_sql_query=corrected_sql)
+
+        logger.info(
+            'Completed fuzzy correction of SQL query.',
+            extra={
+                'original_query': sql_query,
+                'corrected_query': corrected_sql,
+                'corrections': [c for c in all_corrections],
+            },
+        )
+        return AutocorrectorOutput(
+            corrected_sql_query=corrected_sql,
+            corrections=all_corrections or None,
+        )
