@@ -10,8 +10,9 @@ from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Text
 from sqlalchemy import Integer
-from sqlalchemy import Date
 from sqlalchemy import text
+from sqlalchemy import Float
+from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
@@ -35,40 +36,36 @@ class Province(Base):
     __tablename__ = 'provinces'
 
     id: Mapped[str] = mapped_column(Text, primary_key=True, index=True)
-    name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    province_id: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    name_vi: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    name_en: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    type_vi: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    type_en: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    extent_minx: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    extent_maxx: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    extent_miny: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    extent_maxy: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
-    # Relationships
-    districts: Mapped[list[District]] = relationship(
-        back_populates='province',
-        cascade='all, delete-orphan',
-    )
-
-
-class District(Dated):
+class District(Base):
     __tablename__ = 'districts'
 
     id: Mapped[str] = mapped_column(Text, primary_key=True, index=True)
-    province_id: Mapped[str] = mapped_column(
-        Text,
-        ForeignKey('provinces.id', ondelete='CASCADE'),
-        nullable=False,
-    )
-    name: Mapped[str] = mapped_column(Text, nullable=False)
-    normalized_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    administrative_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-
-    # Relationships
-    province: Mapped[Province] = relationship(back_populates='districts')
-    stats: Mapped[list[DistricStats]] = relationship(
-        back_populates='district',
-        cascade='all, delete-orphan',
-    )
+    province_id: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    district_id: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    name_vi: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    name_en: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    type_vi: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    type_en: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    num_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    extent_minx: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    extent_maxx: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    extent_miny: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    extent_maxy: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     # Indexes
     __table_args__ = (
         Index('idx_districts_province', 'province_id'),
-        Index('idx_districts_name', 'name'),
-        Index('idx_districts_admin_id', 'administrative_id'),
+        Index('idx_districts_district_id', 'district_id'),
     )
 
 
@@ -80,30 +77,23 @@ class AirComponent(Dated):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
-class DistricStats(Dated):
+class DistricStats(Base):
     __tablename__ = 'distric_stats'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    date: Mapped[datetime] = mapped_column(Date, nullable=False)
-    hour: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    component_id: Mapped[str] = mapped_column(Text, nullable=False)
-    aqi_value: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    pm25_value: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    district_id: Mapped[str] = mapped_column(
-        Text,
-        ForeignKey('districts.id', ondelete='CASCADE'),
-        nullable=False,
-    )
-
-    # Relationships
-    district: Mapped[District] = relationship(back_populates='stats')
+    district_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    num_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    val_sum: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    num: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    val_avg: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    category_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    val_sum_aqi: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    val_avg_aqi: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Indexes
     __table_args__ = (
-        Index('idx_stats_date', 'date'),
-        Index('idx_stats_district', 'district_id'),
-        Index('idx_stats_component', 'component_id'),
-        Index('idx_stats_date_district', 'date', 'district_id'),
+        Index('idx_distric_stats_num_id', 'num_id'),
+        Index('idx_distric_stats_category_id', 'category_id'),
     )
 
 
