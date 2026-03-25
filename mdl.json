@@ -1,0 +1,280 @@
+{
+    "models": [
+        {
+            "name": "provinces",
+            "properties": {
+                "description": "Provinces table stores province-level administrative information. Use this to find province names or IDs. Contains id (example: 12) and name (example: Hà Nội)."
+            },
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "Unique identifier for each province, e.g. '12' for Hà Nội",
+                        "example": [
+                            "12"
+                        ]
+                    }
+                },
+                {
+                    "name": "name",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "Official name of the province or city",
+                        "example": [
+                            "Hà Nội"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "districts",
+            "properties": {
+                "description": "Districts table stores all ward-level areas (phường) in Hà Nội. Use this to find district/ward names, look up a specific area, or translate between district name and its IDs. IMPORTANT: All names use 'Phường' prefix, e.g. 'Phường Hoàn Kiếm', 'Phường Ba Đình'. When querying by name, always use ILIKE '%keyword%' to handle the prefix. Contains id (internal ID, example: ID_00000), name (example: Phường Ba Đình, Phường Hoàn Kiếm), normalized_name (ASCII-safe version, example: Phuong Ba Dinh), administrative_id (VNM format, example: VNM.27.1_1), province_id referencing provinces."
+            },
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "Internal district identifier used in Forecast API (ID_XXXXX format)",
+                        "example": [
+                            "ID_00000",
+                            "ID_00001"
+                        ]
+                    }
+                },
+                {
+                    "name": "province_id",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "Foreign key referencing provinces.id, linking the district to its parent province",
+                        "example": [
+                            "12"
+                        ]
+                    }
+                },
+                {
+                    "name": "name",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "Official Vietnamese name of the district",
+                        "example": [
+                            "Phường Ba Đình",
+                            "Phường Hoàn Kiếm",
+                            "Phường Cầu Giấy",
+                            "Phường Long Biên"
+                        ]
+                    }
+                },
+                {
+                    "name": "normalized_name",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "ASCII-normalized (diacritic-stripped) version of the district name for search and matching",
+                        "example": [
+                            "Phuong Ba Dinh",
+                            "Phuong Hoan Kiem",
+                            "Phuong Long Bien"
+                        ]
+                    }
+                },
+                {
+                    "name": "administrative_id",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "Administrative ID in VNM.27.X_1 format used in Rankings API",
+                        "example": [
+                            "VNM.27.1_1",
+                            "VNM.27.2_1",
+                            "VNM.27.3_1"
+                        ]
+                    }
+                },
+                {
+                    "name": "created_at",
+                    "type": "TIMESTAMP",
+                    "properties": {
+                        "description": "Timestamp when this district record was first inserted"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "air_component",
+            "properties": {
+                "description": "Air component table defines the types of air quality measurements tracked in the system. Use this to understand what each component_id means, look up component descriptions, or list all tracked pollutants. Contains name (example: aqi, pm25, pm10, o3, no2, so2, co) and human-readable descriptions."
+            },
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "INTEGER",
+                    "properties": {
+                        "description": "Auto-incremented unique identifier for each air component record"
+                    }
+                },
+                {
+                    "name": "name",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "Short code name of the air quality component used as component_id in distric_stats",
+                        "example": [
+                            "aqi",
+                            "pm25",
+                            "pm10",
+                            "o3",
+                            "no2",
+                            "so2",
+                            "co"
+                        ]
+                    }
+                },
+                {
+                    "name": "description",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "Human-readable description of the air component",
+                        "example": [
+                            "Air Quality Index",
+                            "PM2.5 - Bụi mịn",
+                            "PM10 - Bụi thô",
+                            "Ozone",
+                            "Nitrogen Dioxide",
+                            "Sulfur Dioxide",
+                            "Carbon Monoxide"
+                        ]
+                    }
+                },
+                {
+                    "name": "created_at",
+                    "type": "TIMESTAMP",
+                    "properties": {
+                        "description": "Timestamp when this air component record was inserted"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "distric_stats",
+            "properties": {
+                "description": "District stats table is the main fact table storing hourly AQI and PM2.5 measurements per district per day. Use this for all air quality queries: current AQI, historical trends, comparing districts, finding the most/least polluted area, ranking districts by air quality, daily or hourly breakdown. Contains date, hour (0–23), component_id (example: aqi, pm25), aqi_value (example: 45, 120, 180), pm25_value, and district_id. AQI levels: 0–50 Tốt (Good), 51–100 Trung bình (Moderate), 101–150 Kém (Unhealthy for sensitive), 151–200 Xấu (Unhealthy), 201–300 Rất xấu (Very unhealthy), 301+ Nguy hại (Hazardous)."
+            },
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "INTEGER",
+                    "properties": {
+                        "description": "Auto-incremented unique identifier for each measurement record"
+                    }
+                },
+                {
+                    "name": "date",
+                    "type": "DATE",
+                    "properties": {
+                        "description": "The calendar date of the measurement",
+                        "example": [
+                            "2024-01-15",
+                            "2025-02-20"
+                        ]
+                    }
+                },
+                {
+                    "name": "hour",
+                    "type": "INTEGER",
+                    "properties": {
+                        "description": "Hour of the day (0–23) when the measurement was recorded; NULL means daily aggregate",
+                        "example": [
+                            0,
+                            6,
+                            12,
+                            18,
+                            23
+                        ]
+                    }
+                },
+                {
+                    "name": "component_id",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "The type of air quality component measured, matching air_component.name",
+                        "example": [
+                            "aqi",
+                            "pm25",
+                            "pm10",
+                            "o3",
+                            "no2",
+                            "so2",
+                            "co"
+                        ]
+                    }
+                },
+                {
+                    "name": "aqi_value",
+                    "type": "INTEGER",
+                    "properties": {
+                        "description": "Measured Air Quality Index value. AQI scale: 0–50 Good, 51–100 Moderate, 101–150 Unhealthy for sensitive groups, 151–200 Unhealthy, 201–300 Very Unhealthy, 301+ Hazardous",
+                        "example": [
+                            30,
+                            65,
+                            120,
+                            175,
+                            220
+                        ]
+                    }
+                },
+                {
+                    "name": "pm25_value",
+                    "type": "INTEGER",
+                    "properties": {
+                        "description": "Measured PM2.5 fine particulate matter concentration in µg/m³",
+                        "example": [
+                            10,
+                            35,
+                            75,
+                            120
+                        ]
+                    }
+                },
+                {
+                    "name": "district_id",
+                    "type": "TEXT",
+                    "properties": {
+                        "description": "Foreign key referencing districts.id (ID_XXXXX format), identifying which district the measurement belongs to",
+                        "example": [
+                            "ID_00000",
+                            "ID_00001"
+                        ]
+                    }
+                },
+                {
+                    "name": "create_at",
+                    "type": "TIMESTAMP",
+                    "properties": {
+                        "description": "Timestamp when this measurement record was inserted into the database"
+                    }
+                }
+            ]
+        }
+    ],
+    "relationships": [
+        {
+            "name": "districts_to_provinces",
+            "models": [
+                "districts",
+                "provinces"
+            ],
+            "joinType": "MANY_TO_ONE",
+            "condition": "districts.province_id = provinces.id"
+        },
+        {
+            "name": "distric_stats_to_districts",
+            "models": [
+                "distric_stats",
+                "districts"
+            ],
+            "joinType": "MANY_TO_ONE",
+            "condition": "distric_stats.district_id = districts.id"
+        }
+    ]
+}

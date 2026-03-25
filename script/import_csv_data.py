@@ -48,7 +48,6 @@ def import_provinces(cur):
 
 def import_districts(cur):
     """Import districts from districts.csv + admin IDs from districts_full.csv."""
-    # Build admin-id lookup from districts_full.csv
     admin_ids: dict[str, str] = {}
     full_path = os.path.join(CSV_DIR, "districts_full.csv")
     with open(full_path, encoding="utf-8") as f:
@@ -66,7 +65,7 @@ def import_districts(cur):
             district_id = row["id"]
             cur.execute(
                 """
-                INSERT INTO districts (id, province_id, name, normalized_name, administrative_id, created_at)
+                INSERT INTO districts (id, province_id, name, normalized_name, administrative_id, create_at)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 ON CONFLICT (id) DO NOTHING
                 """,
@@ -97,7 +96,7 @@ def import_air_components(cur):
     for name, desc in components:
         cur.execute(
             """
-            INSERT INTO air_component (name, description, created_at)
+            INSERT INTO air_component (name, description, create_at)
             SELECT %s, %s, %s
             WHERE NOT EXISTS (SELECT 1 FROM air_component WHERE name = %s)
             """,
@@ -117,7 +116,7 @@ def import_distric_stats(cur):
             pm25_val = row.get("pm25_value", "").strip()
             cur.execute(
                 """
-                INSERT INTO distric_stats (district_id, date, hour, component_id, aqi_value, pm25_value, created_at)
+                INSERT INTO distric_stats (district_id, date, hour, component_id, aqi_value, pm25_value, create_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
@@ -145,7 +144,7 @@ def import_current_aqi(cur):
             component = row.get("component", "aqi").strip()
             cur.execute(
                 """
-                INSERT INTO distric_stats (district_id, date, hour, component_id, aqi_value, pm25_value, created_at)
+                INSERT INTO distric_stats (district_id, date, hour, component_id, aqi_value, pm25_value, create_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
@@ -174,7 +173,7 @@ def import_forecast(cur):
             component = row.get("component", "").strip() or "PM2.5"
             cur.execute(
                 """
-                INSERT INTO distric_stats (district_id, date, hour, component_id, aqi_value, pm25_value, created_at)
+                INSERT INTO distric_stats (district_id, date, hour, component_id, aqi_value, pm25_value, create_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
@@ -207,7 +206,6 @@ def import_hanoiair_data(cur):
                 continue
 
             aqi_val = row.get("aqi_avg", "").strip() or row.get("aqi_value", "").strip() or row.get("forecast_aqi", "").strip()
-            # For forecast rows, use forecast_date
             if data_type == "forecast" and row.get("forecast_date", "").strip():
                 date_str = row["forecast_date"].strip()
                 aqi_val = row.get("forecast_aqi", "").strip() or aqi_val
@@ -215,7 +213,7 @@ def import_hanoiair_data(cur):
             component = "aqi"
             cur.execute(
                 """
-                INSERT INTO distric_stats (district_id, date, hour, component_id, aqi_value, pm25_value, created_at)
+                INSERT INTO distric_stats (district_id, date, hour, component_id, aqi_value, pm25_value, create_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
@@ -248,7 +246,6 @@ def main():
         conn.commit()
         print("\n✅ All data imported successfully!")
 
-        # Summary
         cur.execute("SELECT COUNT(*) FROM provinces")
         print(f"   provinces:     {cur.fetchone()[0]}")
         cur.execute("SELECT COUNT(*) FROM districts")
