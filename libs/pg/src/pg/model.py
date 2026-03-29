@@ -36,7 +36,6 @@ class Province(Base):
     __tablename__ = 'provinces'
 
     id: Mapped[str] = mapped_column(Text, primary_key=True, index=True)
-    province_id: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     name_vi: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     name_en: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     type_vi: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
@@ -50,13 +49,11 @@ class District(Base):
     __tablename__ = 'districts'
 
     id: Mapped[str] = mapped_column(Text, primary_key=True, index=True)
-    province_id: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
-    district_id: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    province_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     name_vi: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     name_en: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     type_vi: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     type_en: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    num_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     extent_minx: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     extent_maxx: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     extent_miny: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
@@ -65,7 +62,6 @@ class District(Base):
     # Indexes
     __table_args__ = (
         Index('idx_districts_province', 'province_id'),
-        Index('idx_districts_district_id', 'district_id'),
     )
 
 
@@ -82,17 +78,15 @@ class DistricStats(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     district_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    num_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    val_sum: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    num: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    val_avg: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     category_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    num: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    val_sum_pm25: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    val_avg_pm25: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     val_sum_aqi: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     val_avg_aqi: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Indexes
     __table_args__ = (
-        Index('idx_distric_stats_num_id', 'num_id'),
         Index('idx_distric_stats_category_id', 'category_id'),
     )
 

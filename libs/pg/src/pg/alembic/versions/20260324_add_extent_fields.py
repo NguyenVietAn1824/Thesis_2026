@@ -19,17 +19,27 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def _add_column_if_not_exists(table: str, column: str, sql_type: str) -> None:
+    """Add a column using raw SQL if it does not exist.
+
+    Why raw SQL: this migration is meant to be resilient across environments
+    where the table may already exist with partial columns from earlier runs.
+    """
     op.execute(f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {sql_type}')
 
 
 def _drop_column_if_exists(table: str, column: str) -> None:
+    """Drop a column using raw SQL if it exists (idempotent)."""
     op.execute(f'ALTER TABLE {table} DROP COLUMN IF EXISTS {column}')
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # provinces: keep existing columns and add GIS-oriented fields.
-    _add_column_if_not_exists('provinces', 'province_id', 'VARCHAR(80)')
+    # NOTE:
+    # This migration is aligned with `services/aqi_agent/.../shared/models/schemas.py`.
+    # The canonical business identifiers are stored in `id` (TEXT) columns, so we do
+    # NOT add shadow columns like `province_id` / `district_id`.
+
+    # provinces: add GIS-oriented naming + extent fields.
     _add_column_if_not_exists('provinces', 'name_vi', 'VARCHAR(80)')
     _add_column_if_not_exists('provinces', 'name_en', 'VARCHAR(150)')
     _add_column_if_not_exists('provinces', 'type_vi', 'VARCHAR(50)')
@@ -39,67 +49,52 @@ def upgrade() -> None:
     _add_column_if_not_exists('provinces', 'extent_miny', 'DOUBLE PRECISION')
     _add_column_if_not_exists('provinces', 'extent_maxy', 'DOUBLE PRECISION')
 
-    # districts: add imported administrative naming and extent columns.
-    _add_column_if_not_exists('districts', 'district_id', 'VARCHAR(80)')
+    # districts: add naming/type/extent fields. `province_id` already exists and is
+    # used as the foreign reference to `provinces.id` (now nullable in later cleanup).
     _add_column_if_not_exists('districts', 'name_vi', 'VARCHAR(150)')
     _add_column_if_not_exists('districts', 'name_en', 'VARCHAR(150)')
     _add_column_if_not_exists('districts', 'type_vi', 'VARCHAR(50)')
     _add_column_if_not_exists('districts', 'type_en', 'VARCHAR(50)')
-    _add_column_if_not_exists('districts', 'num_id', 'INTEGER')
     _add_column_if_not_exists('districts', 'extent_minx', 'DOUBLE PRECISION')
     _add_column_if_not_exists('districts', 'extent_maxx', 'DOUBLE PRECISION')
     _add_column_if_not_exists('districts', 'extent_miny', 'DOUBLE PRECISION')
     _add_column_if_not_exists('districts', 'extent_maxy', 'DOUBLE PRECISION')
 
-    # distric_stats: add aggregate statistic columns from imported source.
-    _add_column_if_not_exists('distric_stats', 'num_id', 'INTEGER')
-    _add_column_if_not_exists('distric_stats', 'val_sum', 'DOUBLE PRECISION')
+    # distric_stats: aggregate statistic columns (no extent columns here).
     _add_column_if_not_exists('distric_stats', 'num', 'INTEGER')
-    _add_column_if_not_exists('distric_stats', 'val_avg', 'DOUBLE PRECISION')
+    _add_column_if_not_exists('distric_stats', 'val_sum_pm25', 'DOUBLE PRECISION')
+    _add_column_if_not_exists('distric_stats', 'val_avg_pm25', 'DOUBLE PRECISION')
     _add_column_if_not_exists('distric_stats', 'category_id', 'VARCHAR(50)')
     _add_column_if_not_exists('distric_stats', 'val_sum_aqi', 'INTEGER')
     _add_column_if_not_exists('distric_stats', 'val_avg_aqi', 'INTEGER')
-    _add_column_if_not_exists('distric_stats', 'extent_minx', 'DOUBLE PRECISION')
-    _add_column_if_not_exists('distric_stats', 'extent_maxx', 'DOUBLE PRECISION')
-    _add_column_if_not_exists('distric_stats', 'extent_miny', 'DOUBLE PRECISION')
-    _add_column_if_not_exists('distric_stats', 'extent_maxy', 'DOUBLE PRECISION')
 
-    op.execute('CREATE INDEX IF NOT EXISTS idx_provinces_province_id ON provinces (province_id)')
-    op.execute('CREATE INDEX IF NOT EXISTS idx_districts_district_id ON districts (district_id)')
-    op.execute('CREATE INDEX IF NOT EXISTS idx_distric_stats_num_id ON distric_stats (num_id)')
+    # Index used by queries/filters in the new schema.
     op.execute('CREATE INDEX IF NOT EXISTS idx_distric_stats_category_id ON distric_stats (category_id)')
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     op.execute('DROP INDEX IF EXISTS idx_distric_stats_category_id')
-    op.execute('DROP INDEX IF EXISTS idx_distric_stats_num_id')
-    op.execute('DROP INDEX IF EXISTS idx_districts_district_id')
-    op.execute('DROP INDEX IF EXISTS idx_provinces_province_id')
 
-    for table in ['provinces', 'districts', 'distric_stats']:
+    for table in ['provinces', 'districts']:
         _drop_column_if_exists(table, 'extent_minx')
         _drop_column_if_exists(table, 'extent_maxx')
         _drop_column_if_exists(table, 'extent_miny')
         _drop_column_if_exists(table, 'extent_maxy')
 
-    _drop_column_if_exists('provinces', 'province_id')
     _drop_column_if_exists('provinces', 'name_vi')
     _drop_column_if_exists('provinces', 'name_en')
     _drop_column_if_exists('provinces', 'type_vi')
     _drop_column_if_exists('provinces', 'type_en')
 
-    _drop_column_if_exists('districts', 'district_id')
     _drop_column_if_exists('districts', 'name_vi')
     _drop_column_if_exists('districts', 'name_en')
     _drop_column_if_exists('districts', 'type_vi')
     _drop_column_if_exists('districts', 'type_en')
-    _drop_column_if_exists('districts', 'num_id')
 
-    _drop_column_if_exists('distric_stats', 'num_id')
-    _drop_column_if_exists('distric_stats', 'val_sum')
     _drop_column_if_exists('distric_stats', 'num')
-    _drop_column_if_exists('distric_stats', 'val_avg')
+    _drop_column_if_exists('distric_stats', 'val_sum_pm25')
+    _drop_column_if_exists('distric_stats', 'val_avg_pm25')
     _drop_column_if_exists('distric_stats', 'category_id')
     _drop_column_if_exists('distric_stats', 'val_sum_aqi')
     _drop_column_if_exists('distric_stats', 'val_avg_aqi')

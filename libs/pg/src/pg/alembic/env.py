@@ -2,6 +2,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy import text
 
 from alembic import context
 
@@ -68,12 +69,21 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        # Ensure we always have a default schema selected.
+        # Some Postgres setups may not have a default search_path for the role,
+        # which can break creation of `alembic_version` and other tables.
+        connection.execute(text("SET search_path TO public"))
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table_schema="public",
         )
 
         with context.begin_transaction():
             context.run_migrations()
+        # Explicit commit: in some SQLAlchemy 2.x setups, leaving the connection
+        # context without an explicit commit can roll back the implicit transaction.
+        connection.commit()
 
 
 if context.is_offline_mode():

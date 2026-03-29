@@ -102,11 +102,10 @@ class DistrictController(Repository):
             >>> districts = controller.search_districts_by_name(session, "hoan kiem")
         """
         try:
-            search_lower = search_term.lower()
             stmt = select(DistrictModel).where(
                 or_(
-                    DistrictModel.name.ilike(f'%{search_term}%'),
-                    DistrictModel.normalized_name.ilike(f'%{search_lower}%'),
+                    DistrictModel.name_vi.ilike(f'%{search_term}%'),
+                    DistrictModel.name_en.ilike(f'%{search_term}%'),
                 )
             ).limit(limit)
             
@@ -139,7 +138,7 @@ class DistrictController(Repository):
         return self.get_districts(
             session=session,
             filter={'province_id': province_id},
-            order_by=[DistrictModel.name],
+            order_by=[DistrictModel.name_vi],
         )
 
     def get_district_by_normalized_name(
@@ -161,7 +160,7 @@ class DistrictController(Repository):
         """
         try:
             stmt = select(DistrictModel).where(
-                DistrictModel.normalized_name == normalized_name.lower()
+                DistrictModel.name_vi.ilike(normalized_name)
             )
             obj = session.scalars(stmt).first()
             return District.model_validate(obj) if obj else None
