@@ -116,7 +116,7 @@ class TableIndexerService(BaseService):
         for i, model in enumerate(mdl['models']):
             try:
                 if i > 0:
-                    await asyncio.sleep(1)  # Rate limit protection
+                    await asyncio.sleep(3)  # Rate limit protection
                 text = model['properties']['description']
                 embedding_output = await self.litellm_service.embedding_async(
                     inputs=LiteLLMEmbeddingInput(

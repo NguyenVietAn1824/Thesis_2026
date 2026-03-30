@@ -41,20 +41,15 @@ REDIS_KEY_PREFIX = os.getenv('AUTOCORRECTOR__REDIS_KEY_PREFIX', 'frequent_values
 
 
 CANDIDATE_COLUMNS: list[tuple[str, str]] = [
-    # simple schema
-    ('provinces', 'name'),
-    ('districts', 'name'),
-    ('districts', 'normalized_name'),
+    ('provinces', 'name_vi'),
+    ('provinces', 'name_en'),
+    ('provinces', 'id'),
+    ('districts', 'name_vi'),
+    ('districts', 'name_en'),
     ('districts', 'id'),
-    ('districts', 'administrative_id'),
     ('air_component', 'name'),
-    ('distric_stats', 'component_id'),
+    ('distric_stats', 'category_id'),
     ('distric_stats', 'district_id'),
-    # other schema variants
-    ('current_aqi', 'district_internal_id'),
-    ('current_aqi', 'component_id'),
-    ('aqi_rankings', 'district_admin_id'),
-    ('forecast_data', 'district_internal_id'),
 ]
 
 
@@ -110,27 +105,16 @@ def get_distinct_values(cur, table: str, column: str) -> list[str]:
 
 
 def expand_values(values: list[str]) -> list[str]:
-    """Add normalized variants for better fuzzy matching.
-
-    Example:
-      "Hà Nội" -> ["Hà Nội", "Ha Noi", "ha noi"]
-    """
+    """Return distinct exact values from DB for fuzzy matching."""
     out: list[str] = []
     seen: set[str] = set()
 
     for raw in values:
-        variants = [raw]
-        no_acc = remove_accents(raw)
-        if no_acc != raw:
-            variants.append(no_acc)
-        variants.append(no_acc.lower())
-
-        for v in variants:
-            v = v.strip()
-            if not v or v in seen:
-                continue
-            seen.add(v)
-            out.append(v)
+        v = raw.strip()
+        if not v or v in seen:
+            continue
+        seen.add(v)
+        out.append(v)
 
     return out
 

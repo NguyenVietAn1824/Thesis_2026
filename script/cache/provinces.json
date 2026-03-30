@@ -1,0 +1,206 @@
+[
+  {
+    "code": 1,
+    "name": "Thành phố Hà Nội",
+    "division_type": "thành phố trung ương",
+    "codename": "ha_noi"
+  },
+  {
+    "code": 4,
+    "name": "Tỉnh Cao Bằng",
+    "division_type": "tỉnh",
+    "codename": "cao_bang"
+  },
+  {
+    "code": 8,
+    "name": "Tỉnh Tuyên Quang",
+    "division_type": "tỉnh",
+    "codename": "tuyen_quang"
+  },
+  {
+    "code": 11,
+    "name": "Tỉnh Điện Biên",
+    "division_type": "tỉnh",
+    "codename": "dien_bien"
+  },
+  {
+    "code": 12,
+    "name": "Tỉnh Lai Châu",
+    "division_type": "tỉnh",
+    "codename": "lai_chau"
+  },
+  {
+    "code": 14,
+    "name": "Tỉnh Sơn La",
+    "division_type": "tỉnh",
+    "codename": "son_la"
+  },
+  {
+    "code": 15,
+    "name": "Tỉnh Lào Cai",
+    "division_type": "tỉnh",
+    "codename": "lao_cai"
+  },
+  {
+    "code": 19,
+    "name": "Tỉnh Thái Nguyên",
+    "division_type": "tỉnh",
+    "codename": "thai_nguyen"
+  },
+  {
+    "code": 20,
+    "name": "Tỉnh Lạng Sơn",
+    "division_type": "tỉnh",
+    "codename": "lang_son"
+  },
+  {
+    "code": 22,
+    "name": "Tỉnh Quảng Ninh",
+    "division_type": "tỉnh",
+    "codename": "quang_ninh"
+  },
+  {
+    "code": 24,
+    "name": "Tỉnh Bắc Ninh",
+    "division_type": "tỉnh",
+    "codename": "bac_ninh"
+  },
+  {
+    "code": 25,
+    "name": "Tỉnh Phú Thọ",
+    "division_type": "tỉnh",
+    "codename": "phu_tho"
+  },
+  {
+    "code": 31,
+    "name": "Thành phố Hải Phòng",
+    "division_type": "thành phố trung ương",
+    "codename": "hai_phong"
+  },
+  {
+    "code": 33,
+    "name": "Tỉnh Hưng Yên",
+    "division_type": "tỉnh",
+    "codename": "hung_yen"
+  },
+  {
+    "code": 37,
+    "name": "Tỉnh Ninh Bình",
+    "division_type": "tỉnh",
+    "codename": "ninh_binh"
+  },
+  {
+    "code": 38,
+    "name": "Tỉnh Thanh Hóa",
+    "division_type": "tỉnh",
+    "codename": "thanh_hoa"
+  },
+  {
+    "code": 40,
+    "name": "Tỉnh Nghệ An",
+    "division_type": "tỉnh",
+    "codename": "nghe_an"
+  },
+  {
+    "code": 42,
+    "name": "Tỉnh Hà Tĩnh",
+    "division_type": "tỉnh",
+    "codename": "ha_tinh"
+  },
+  {
+    "code": 44,
+    "name": "Tỉnh Quảng Trị",
+    "division_type": "tỉnh",
+    "codename": "quang_tri"
+  },
+  {
+    "code": 46,
+    "name": "Thành phố Huế",
+    "division_type": "thành phố trung ương",
+    "codename": "hue"
+  },
+  {
+    "code": 48,
+    "name": "Thành phố Đà Nẵng",
+    "division_type": "thành phố trung ương",
+    "codename": "da_nang"
+  },
+  {
+    "code": 51,
+    "name": "Tỉnh Quảng Ngãi",
+    "division_type": "tỉnh",
+    "codename": "quang_ngai"
+  },
+  {
+    "code": 52,
+    "name": "Tỉnh Gia Lai",
+    "division_type": "tỉnh",
+    "codename": "gia_lai"
+  },
+  {
+    "code": 56,
+    "name": "Tỉnh Khánh Hòa",
+    "division_type": "tỉnh",
+    "codename": "khanh_hoa"
+  },
+  {
+    "code": 66,
+    "name": "Tỉnh Đắk Lắk",
+    "division_type": "tỉnh",
+    "codename": "dak_lak"
+  },
+  {
+    "code": 68,
+    "name": "Tỉnh Lâm Đồng",
+    "division_type": "tỉnh",
+    "codename": "lam_dong"
+  },
+  {
+    "code": 75,
+    "name": "Tỉnh Đồng Nai",
+    "division_type": "tỉnh",
+    "codename": "dong_nai"
+  },
+  {
+    "code": 79,
+    "name": "Thành phố Hồ Chí Minh",
+    "division_type": "thành phố trung ương",
+    "codename": "ho_chi_minh"
+  },
+  {
+    "code": 80,
+    "name": "Tỉnh Tây Ninh",
+    "division_type": "tỉnh",
+    "codename": "tay_ninh"
+  },
+  {
+    "code": 82,
+    "name": "Tỉnh Đồng Tháp",
+    "division_type": "tỉnh",
+    "codename": "dong_thap"
+  },
+  {
+    "code": 86,
+    "name": "Tỉnh Vĩnh Long",
+    "division_type": "tỉnh",
+    "codename": "vinh_long"
+  },
+  {
+    "code": 91,
+    "name": "Tỉnh An Giang",
+    "division_type": "tỉnh",
+    "codename": "an_giang"
+  },
+  {
+    "code": 92,
+    "name": "Thành phố Cần Thơ",
+    "division_type": "thành phố trung ương",
+    "codename": "can_tho"
+  },
+  {
+    "code": 96,
+    "name": "Tỉnh Cà Mau",
+    "division_type": "tỉnh",
+    "codename": "ca_mau"
+  }
+]

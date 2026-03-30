@@ -13,6 +13,7 @@
 #   --max-completion-tokens N   Max completion tokens          (default: 2048)
 #   --mdl-path PATH             Path to mdl.json               (default: auto-detected)
 #   --dimensions N              Embedding vector dimensions    (default: 1536)
+#   --force                     Delete existing index & pipeline before re-indexing
 #
 # Examples:
 #   # Run with all defaults
@@ -48,6 +49,7 @@ MODEL="${LITELLM__MODEL:-gpt-4.1-nano}"
 MAX_COMPLETION_TOKENS="${LITELLM__MAX_COMPLETION_TOKENS:-2048}"
 MDL_PATH=""
 DIMENSIONS="${LITELLM__DIMENSIONS:-1536}"
+FORCE=""
 
 # ── Parse CLI arguments ───────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -80,6 +82,10 @@ while [[ $# -gt 0 ]]; do
       DIMENSIONS="$2"
       shift 2
       ;;
+    --force)
+      FORCE="--force"
+      shift
+      ;;
     *)
       echo "Unknown option: $1"
       echo "Usage: $0 [--index-name NAME] [--search-pipeline NAME] [--knn-size N] [--model NAME] [--max-completion-tokens N] [--mdl-path PATH] [--dimensions N]"
@@ -99,11 +105,13 @@ echo "🤖 Model             : $MODEL"
 echo "🔑 Max tokens        : $MAX_COMPLETION_TOKENS"
 echo "📐 Dimensions        : $DIMENSIONS"
 [ -n "$MDL_PATH" ] && echo "📄 MDL path          : $MDL_PATH"
+[ -n "$FORCE" ] && echo "🗑️  Force re-index   : YES"
 echo "========================================================================"
 
 # ── Build extra args ──────────────────────────────────────────────────────────
 EXTRA_ARGS=""
 [ -n "$MDL_PATH" ] && EXTRA_ARGS="--mdl-path $MDL_PATH"
+[ -n "$FORCE" ] && EXTRA_ARGS="$EXTRA_ARGS --force"
 
 # ── Run the indexer ───────────────────────────────────────────────────────────
 uv run --package aqi-agent "$SCRIPT_DIR/index_tables.py" \

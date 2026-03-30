@@ -37,7 +37,6 @@ class Provinces(BaseModel):
         description='Nested districts when loaded via GraphQL/ORM',
     )
 
-
 class Districts(BaseModel):
     """District row — table `districts`."""
 
@@ -92,7 +91,6 @@ class AirComponent(BaseModel):
     created_at: Optional[datetime] = Field(default=None, description='Created at')
     updated_at: Optional[datetime] = Field(default=None, description='Updated at')
     deleted_at: Optional[datetime] = Field(default=None, description='Soft delete timestamp')
-
 
 Provinces.model_rebuild()
 Districts.model_rebuild()

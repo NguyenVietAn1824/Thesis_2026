@@ -61,13 +61,19 @@ def parse_args() -> argparse.Namespace:
         '--mdl-path',
         type=str,
         default=None,
-        help='Path to the MDL JSON file (default: services/aqi_agent/src/aqi_agent/infra/mdl.json)',
+        help='Path to the MDL JSON file (default: <project_root>/mdl.json)',
     )
     parser.add_argument(
         '--dimensions',
         type=int,
         default=int(os.getenv('LITELLM__DIMENSIONS', '1536')),
         help='Embedding vector dimensions (default: 1536)',
+    )
+    parser.add_argument(
+        '--force',
+        action='store_true',
+        default=False,
+        help='Force re-index by deleting the existing index and search pipeline first',
     )
     return parser.parse_args()
 
@@ -123,11 +129,25 @@ async def main(args: argparse.Namespace) -> None:
         settings=table_pruner_settings,
     )
 
+    # ── Force delete old index & pipeline if requested ─────────────────────
+    if args.force:
+        print('\n🗑️  --force: Deleting existing index and search pipeline...')
+        if opensearch_service.index_exists(index_name=table_pruner_settings.index_name):
+            deleted = opensearch_service.delete_index(index_name=table_pruner_settings.index_name)
+            print(f'   Index "{table_pruner_settings.index_name}": {"deleted" if deleted else "failed to delete"}')
+        else:
+            print(f'   Index "{table_pruner_settings.index_name}": does not exist (skip)')
+        if opensearch_service.search_pipeline_exists(pipeline_id=table_pruner_settings.search_pipeline):
+            deleted = opensearch_service.delete_search_pipeline(pipeline_id=table_pruner_settings.search_pipeline)
+            print(f'   Pipeline "{table_pruner_settings.search_pipeline}": {"deleted" if deleted else "failed to delete"}')
+        else:
+            print(f'   Pipeline "{table_pruner_settings.search_pipeline}": does not exist (skip)')
+
     # ── Load MDL ──────────────────────────────────────────────────────────────
     if args.mdl_path:
         mdl_path = Path(args.mdl_path)
     else:
-        mdl_path = Path(__file__).resolve().parent.parent / 'test' / 'mdl.json'
+        mdl_path = Path(__file__).resolve().parent.parent / 'mdl.json'
 
     if not mdl_path.exists():
         print(f'❌ MDL file not found: {mdl_path}')

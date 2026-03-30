@@ -65,6 +65,9 @@ class District(Base):
     )
 
 
+
+
+
 class AirComponent(Dated):
     __tablename__ = 'air_component'
 
