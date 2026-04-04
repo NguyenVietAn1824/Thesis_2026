@@ -21,7 +21,6 @@ aqi_agent_router = APIRouter()
 logger = get_logger(__name__)
 settings = get_settings()
 
-
 @aqi_agent_router.post(
     '/aqi_agent',
     response_model=AQIAgentOutput,

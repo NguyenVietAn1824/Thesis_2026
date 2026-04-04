@@ -475,6 +475,15 @@ class AQIAgentApplication(BaseService):
         else:
             response = graph_output.get('sql_execution_state', {}).get('execution_result', '')
 
+        logger.info(
+            "AQI Agent request processed",
+            extra={
+                "conversation_id": inputs.conversation_id,
+                "user_id": inputs.user_id,
+                "question": inputs.question,
+                "response": response,
+            },
+        )
         background_tasks.add_task(
             self.memory_updater_service.gprocess,
             inputs=graph_output,

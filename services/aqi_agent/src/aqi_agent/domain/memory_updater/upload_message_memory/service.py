@@ -43,6 +43,8 @@ class UploadMessageMemoryService(BaseService):
                 extra={
                     'conversation_id': inputs.conversation_id,
                     'message_id': message.id,
+                    "answer": inputs.answer,
+                    "question": inputs.question,
                 },
             )
 
