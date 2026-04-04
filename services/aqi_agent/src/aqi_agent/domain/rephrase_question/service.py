@@ -28,7 +28,10 @@ class RephraseModel(BaseModel):
     """
     rephrase_main_question: str | None = Field(
         ...,
-        description='A rephrased version of the main question to clarify its intent and context.',
+        description=(
+            'Rephrased main question; must stay in the same language as the user '
+            '(Vietnamese in → Vietnamese out). Preserve Vietnamese place names exactly.'
+        ),
     )
     need_context: bool = Field(
         ...,
@@ -36,7 +39,7 @@ class RephraseModel(BaseModel):
     )
     language: str = Field(
         ...,
-        description='The language of the raw question.',
+        description='Primary language of the main question, e.g. Vietnamese or English.',
     )
 
 

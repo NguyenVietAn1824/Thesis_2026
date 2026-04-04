@@ -25,7 +25,9 @@ class ConversationTitleGeneratorInput(BaseModel):
 
 class ConversationTitleGeneratorOutput(BaseModel):
     title: str = Field(
-        description='The generated title of the conversation.',
+        description=(
+            'Short title; same language as user; Vietnamese địa danh copied exactly from messages.'
+        ),
     )
 
 

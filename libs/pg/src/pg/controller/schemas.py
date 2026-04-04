@@ -63,15 +63,26 @@ class Province(DatabaseSchema):
 
     Attributes:
         id (str): Province identifier code
-        name (str | None): Province name in Vietnamese
+        name_vi (str | None): Province name in Vietnamese
+        name_en (str | None): Province name in English
+        type_vi (str | None): Province type in Vietnamese
+        type_en (str | None): Province type in English
+        extent_minx (float | None): Minimum X extent
+        extent_maxx (float | None): Maximum X extent
+        extent_miny (float | None): Minimum Y extent
+        extent_maxy (float | None): Maximum Y extent
         districts (list[District] | None): Related districts (populated via relationship)
     """
 
     id: str  # type: ignore  # Override parent's id type
-    name: str | None = Field(
-        default=None,
-        description='Province name in Vietnamese',
-    )
+    name_vi: str | None = Field(default=None, description='Province name in Vietnamese')
+    name_en: str | None = Field(default=None, description='Province name in English')
+    type_vi: str | None = Field(default=None, description='Province type in Vietnamese')
+    type_en: str | None = Field(default=None, description='Province type in English')
+    extent_minx: float | None = Field(default=None, description='Minimum X extent')
+    extent_maxx: float | None = Field(default=None, description='Maximum X extent')
+    extent_miny: float | None = Field(default=None, description='Minimum Y extent')
+    extent_maxy: float | None = Field(default=None, description='Maximum Y extent')
 
     # Relationships
     districts: Optional[list['District']] = Field(
@@ -85,29 +96,32 @@ class District(DatabaseSchema):
 
     Attributes:
         id (str): District identifier code
-        province_id (str): Foreign key to provinces table
-        name (str): District name in Vietnamese
-        normalized_name (str | None): Normalized name for searching (lowercase, no accents)
-        administrative_id (str | None): Government administrative code
+        province_id (str | None): Foreign key to provinces table
+        name_vi (str | None): District name in Vietnamese
+        name_en (str | None): District name in English
+        type_vi (str | None): District type in Vietnamese
+        type_en (str | None): District type in English
+        extent_minx (float | None): Minimum X extent
+        extent_maxx (float | None): Maximum X extent
+        extent_miny (float | None): Minimum Y extent
+        extent_maxy (float | None): Maximum Y extent
         province (Province | None): Related province (populated via relationship)
         stats (list[DistricStats] | None): Related statistics (populated via relationship)
     """
 
     id: str  # type: ignore  # Override parent's id type
-    province_id: str = Field(
+    province_id: str | None = Field(
+        default=None,
         description='Foreign key reference to provinces.id',
     )
-    name: str = Field(
-        description='District name in Vietnamese',
-    )
-    normalized_name: str | None = Field(
-        default=None,
-        description='Normalized name for searching (lowercase, no diacritics)',
-    )
-    administrative_id: str | None = Field(
-        default=None,
-        description='Government administrative code',
-    )
+    name_vi: str | None = Field(default=None, description='District name in Vietnamese')
+    name_en: str | None = Field(default=None, description='District name in English')
+    type_vi: str | None = Field(default=None, description='District type in Vietnamese')
+    type_en: str | None = Field(default=None, description='District type in English')
+    extent_minx: float | None = Field(default=None, description='Minimum X extent')
+    extent_maxx: float | None = Field(default=None, description='Maximum X extent')
+    extent_miny: float | None = Field(default=None, description='Minimum Y extent')
+    extent_maxy: float | None = Field(default=None, description='Maximum Y extent')
 
     # Relationships
     province: Optional[Province] = Field(
@@ -144,47 +158,25 @@ class AirComponent(DatabaseSchema):
 class DistricStats(DatabaseSchema):
     """District statistics schema corresponding to distric_stats table.
 
-    Contains air quality measurements for a specific district at a specific time.
-
     Attributes:
         id (int): Statistics record identifier (auto-increment)
-        date (date): Date of measurement
-        hour (int | None): Hour of measurement (0-23), None for daily average
-        component_id (str): Type of air component measured
-        aqi_value (int | None): Air Quality Index value
-        pm25_value (int | None): PM2.5 concentration value
-        district_id (str): Foreign key to districts table
-        district (District | None): Related district (populated via relationship)
+        district_id (str | None): Foreign key to districts table
+        category_id (str | None): Category identifier
+        num (int | None): Number of measurements
+        val_sum_pm25 (float | None): Sum of PM2.5 values
+        val_avg_pm25 (float | None): Average of PM2.5 values
+        val_sum_aqi (int | None): Sum of AQI values
+        val_avg_aqi (int | None): Average of AQI values
     """
 
     id: int  # type: ignore  # Override parent's id type
-    date: date_type = Field(
-        description='Date of measurement (YYYY-MM-DD)',
-    )
-    hour: int | None = Field(
-        default=None,
-        description='Hour of measurement (0-23), None for daily aggregate',
-    )
-    component_id: str = Field(
-        description='Air component identifier (e.g., AQI, PM2.5)',
-    )
-    aqi_value: int | None = Field(
-        default=None,
-        description='Air Quality Index value',
-    )
-    pm25_value: int | None = Field(
-        default=None,
-        description='PM2.5 particle concentration',
-    )
-    district_id: str = Field(
-        description='Foreign key reference to districts.id',
-    )
-
-    # Relationships
-    district: Optional[District] = Field(
-        default=None,
-        description='Related district record',
-    )
+    district_id: str | None = Field(default=None, description='Foreign key reference to districts.id')
+    category_id: str | None = Field(default=None, description='Category identifier')
+    num: int | None = Field(default=None, description='Number of measurements')
+    val_sum_pm25: float | None = Field(default=None, description='Sum of PM2.5 values')
+    val_avg_pm25: float | None = Field(default=None, description='Average of PM2.5 values')
+    val_sum_aqi: int | None = Field(default=None, description='Sum of AQI values')
+    val_avg_aqi: int | None = Field(default=None, description='Average of AQI values')
 
 
 # Update forward references for relationships

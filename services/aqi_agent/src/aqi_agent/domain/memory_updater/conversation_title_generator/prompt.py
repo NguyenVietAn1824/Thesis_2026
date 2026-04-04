@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-CONVERSATION_TITLE_GENERATOR_SYSTEM_PROMPT = """You are a conversation title generator specialized in air quality data analysis discussions.
-Your task is to generate a short, descriptive title for a conversation between a user and an air quality data assistant.
-The title should be concise (5-10 words) and capture the main topic of the conversation.
-Focus on the key subject matter discussed, such as specific air quality metrics, locations, or types of analysis."""
+CONVERSATION_TITLE_GENERATOR_SYSTEM_PROMPT = """You generate a very short title for an air-quality assistant chat.
 
-CONVERSATION_TITLE_GENERATOR_USER_PROMPT = """Based on the following conversation messages, generate a short descriptive title:
+Use the same language as the user's messages (Vietnamese user → Vietnamese title).
+
+**Vietnamese:** Keep địa danh exactly as in the conversation (*Giảng Võ*, *Cầu Giấy* — never romanized English forms). Title length about 5–12 words or a short Vietnamese phrase."""
+
+CONVERSATION_TITLE_GENERATOR_USER_PROMPT = """Conversation messages:
 
 {recent_messages}
 
-Generate a concise title (5-10 words) that captures the main topic of this conversation about air quality data."""
+Return one concise title in the user's language; preserve Vietnamese place names and diacritics."""

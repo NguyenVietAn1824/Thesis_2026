@@ -29,7 +29,10 @@ class ConversationSummarizerInput(BaseModel):
 
 class ConversationSummarizerOutput(BaseModel):
     summary: str = Field(
-        description='The generated summary of the conversation.',
+        description=(
+            'Updated conversation summary; same language as user; '
+            'preserve Vietnamese place names exactly (diacritics, no romanization).'
+        ),
     )
 
 

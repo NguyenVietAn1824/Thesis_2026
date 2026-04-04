@@ -81,8 +81,12 @@ def _update(
     try:
         obj = session.get(model_cls, data.id)
         if obj:
+            import sqlalchemy
+            mapper = sqlalchemy.inspect(model_cls)
+            column_names = [col.key for col in mapper.columns]
+
             for k, v in vars(data).items():
-                if v is not None and k != 'id':  # Don't update primary key
+                if v is not None and k != 'id' and k in column_names:
                     setattr(obj, k, v)
 
             session.add(obj)
