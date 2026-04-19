@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unicodedata
 
 import sqlglot
@@ -25,6 +26,10 @@ class FuzzyCorrectorService(BaseService):
     This service performs fuzzy matching on WHERE column = 'value' conditions
     and replaces them with WHERE column IN (...) when matches exceed threshold.
     """
+
+    # NOTE: these prefixes are intentionally unaccented because we compare on
+    # accent-stripped strings in `_canonical_key`.
+    _ADMIN_PREFIXES = ('quan', 'huyen', 'thi xa', 'thanh pho', 'tp', 'tx', 'xa', 'phuong', 'thi tran')
 
     redis_client: Redis
     settings: AutocorrectorSettings
@@ -145,12 +150,28 @@ class FuzzyCorrectorService(BaseService):
             )
             raise
 
+    def _strip_admin_prefix(self, input_str: str) -> str:
+        """Strip leading Vietnamese administrative prefixes for robust name matching."""
+        normalized = input_str.strip()
+        if not normalized:
+            return normalized
+
+        pattern = r'^\s*(?:' + '|'.join(re.escape(p) for p in self._ADMIN_PREFIXES) + r')\s+'
+        return re.sub(pattern, '', normalized, flags=re.IGNORECASE)
+
+    def _canonical_key(self, input_str: str) -> str:
+        """Build canonical fuzzy key by removing accents, lowercasing and dropping admin prefixes."""
+        no_accents = self._remove_accents(input_str.lower().strip())
+        return self._strip_admin_prefix(no_accents)
+
     def _fuzzy_match(
         self,
         query_value: str,
         cached_values: list[str],
         threshold: int,
         max_matches: int | None,
+        *,
+        is_location_name: bool = False,
     ) -> list[str]:
         """Perform fuzzy matching of a query value against a list of cached values.
 
@@ -167,15 +188,29 @@ class FuzzyCorrectorService(BaseService):
             if not query_value or not cached_values:
                 return []
 
-            query_normalized = self._remove_accents(query_value.lower().strip())
+            if is_location_name:
+                query_normalized = self._canonical_key(query_value)
+            else:
+                query_normalized = self._remove_accents(query_value.lower().strip())
 
             normalized_cache_map: dict[str, str] = {}
             for val in cached_values:
-                norm_val = self._remove_accents(val.lower().strip())
+                norm_val = self._canonical_key(val) if is_location_name else self._remove_accents(val.lower().strip())
                 if norm_val not in normalized_cache_map:
                     normalized_cache_map[norm_val] = val
 
             normalized_cached_list = list(normalized_cache_map.keys())
+
+            # For location names, prefer exact canonical-key match first
+            # (e.g. "Quận Hoàn Kiếm" -> "Phường Hoàn Kiếm").
+            if is_location_name:
+                exact_canonical = [
+                    normalized_cache_map[k]
+                    for k in normalized_cached_list
+                    if k == query_normalized
+                ]
+                if exact_canonical:
+                    return exact_canonical[: max_matches or len(exact_canonical)]
 
             results = process.extract(
                 query_normalized,
@@ -200,6 +235,11 @@ class FuzzyCorrectorService(BaseService):
                 extra={'query_value': query_value, 'cached_values': cached_values},
             )
             raise
+
+    def _is_location_name_column(self, column_name: str) -> bool:
+        """Return True when column is a location-name field that should use canonical name matching."""
+        col = (column_name or '').lower()
+        return col.endswith('.name_vi') or col.endswith('.name_en')
 
     def _get_unique_cached_values(
         self, column: exp.Column, table_mapping: dict[str, str],
@@ -424,11 +464,20 @@ class FuzzyCorrectorService(BaseService):
                 original_value: str = cond['value']
                 eq_node: exp.EQ = cond['eq_node']
 
+                column_name = self._get_column_name(column, table_mapping)
+                is_location_name = self._is_location_name_column(column_name)
+
                 unique_cached = self._get_unique_cached_values(column, table_mapping)
                 if not unique_cached or original_value in unique_cached:
                     continue
 
-                matches = self._fuzzy_match(original_value, unique_cached, fuzzy_threshold, max_matches)
+                matches = self._fuzzy_match(
+                    original_value,
+                    unique_cached,
+                    fuzzy_threshold,
+                    max_matches,
+                    is_location_name=is_location_name,
+                )
                 if not matches:
                     continue
 
@@ -480,6 +529,9 @@ class FuzzyCorrectorService(BaseService):
                 column: exp.Column = cond['column']
                 in_node: exp.In = cond['in_node']
 
+                column_name = self._get_column_name(column, table_mapping)
+                is_location_name = self._is_location_name_column(column_name)
+
                 unique_cached = self._get_unique_cached_values(column, table_mapping)
                 if not unique_cached:
                     continue
@@ -497,7 +549,13 @@ class FuzzyCorrectorService(BaseService):
                         new_expressions.append(item_expr.copy())
                         continue
 
-                    matches = self._fuzzy_match(original_value, unique_cached, fuzzy_threshold, max_matches)
+                    matches = self._fuzzy_match(
+                        original_value,
+                        unique_cached,
+                        fuzzy_threshold,
+                        max_matches,
+                        is_location_name=is_location_name,
+                    )
                     if matches:
                         new_expressions.extend(exp.Literal.string(m) for m in matches)
                         corrections.append(Correction(original_value=original_value, corrected_values=matches))

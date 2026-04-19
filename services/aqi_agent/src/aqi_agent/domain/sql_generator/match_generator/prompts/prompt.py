@@ -46,7 +46,9 @@ Detailed Guidelines:
   - Anticipate synonyms or alternative phrasings in user requests
   - Use LOWER() for case-insensitive matching
   - Use '%' wildcards for variations (e.g., WHERE LOWER(country) LIKE LOWER('%korea%'))
-- Use proper TIMESTAMP format (e.g., WHERE datetime BETWEEN TIMESTAMP '2024-01-01 00:00:00' AND '2024-01-31 23:59:59')
+- Table distric_stats: there is NO created_at, createdAt, updated_at, or any date/time column. Filter "today" or a specific calendar day ONLY via category_id using the literal pattern daily_YYYY-MM-DD (e.g. category_id = 'daily_' || to_char(CURRENT_DATE, 'YYYY-MM-DD') in PostgreSQL, or a <python>date.today()</python> tag embedded in that string pattern as required by your pipeline). Never reference ds.createdAt or ds.created_at on distric_stats.
+- category_id for daily rows must be exactly daily_YYYY-MM-DD (no datetime suffix). Use to_char(CURRENT_DATE, 'YYYY-MM-DD') or <python>date.today().isoformat()</python> inside the daily_ prefix, not CURRENT_DATE or timestamp literals as a single string with time.
+- For other tables, use proper TIMESTAMP format only when such columns exist in the schema (e.g., WHERE datetime BETWEEN TIMESTAMP '2024-01-01 00:00:00' AND '2024-01-31 23:59:59')
 - Apply aggregate functions efficiently (COUNT, SUM, AVG)
 - Use subqueries/CASE statements when needed
 - Follow SQL patterns and style demonstrated in the examples

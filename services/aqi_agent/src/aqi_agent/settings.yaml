@@ -1,5 +1,5 @@
 rephrase_question:
-  model: "gpt-4o-mini"
+  model: "gpt-4.1-mini"
   frequency_penalty: 0
   n: 1
   presence_penalty: 0
@@ -8,7 +8,7 @@ rephrase_question:
   max_completion_tokens: 1024
 
 planner:
-  model: "gpt-4o-mini"
+  model: "gpt-4.1-mini"
   frequency_penalty: 0
   n: 1
   presence_penalty: 0
@@ -17,7 +17,7 @@ planner:
   max_completion_tokens: 4096
 
 match_sql_generator:
-  model: "gpt-4o-mini"
+  model: "gpt-4.1-mini"
   frequency_penalty: 0
   n: 1
   presence_penalty: 0
@@ -26,7 +26,7 @@ match_sql_generator:
   max_completion_tokens: 2048
 
 mismatch_sql_generator:
-  model: "gpt-4o-mini"
+  model: "gpt-4.1-mini"
   frequency_penalty: 0
   n: 1
   presence_penalty: 0
@@ -35,7 +35,7 @@ mismatch_sql_generator:
   max_completion_tokens: 2048
 
 human_intervent:
-  model: "gpt-4o-mini"
+  model: "gpt-4.1-mini"
   frequency_penalty: 0
   n: 1
   presence_penalty: 0
@@ -53,14 +53,14 @@ table_pruner:
   index_name: aqi-agent-tables
   search_pipeline: table-retrieval-pipeline
   knn_size: 5
-  model: "gpt-4o-mini"
+  model: "gpt-4.1-mini"
   max_completion_tokens: 2048
 
 history_retrieval:
   n_turns: 2
 
 litellm:
-  model: 'gpt-4o-mini'
+  model: 'gpt-4.1-mini'
   max_token_context: 100000
   max_completion_tokens: 4096
   retry_count: 3
@@ -78,7 +78,7 @@ litellm:
   max_connections: 200
   max_keepalive_connections: 40
   context_window: 100000
-  condition_model: 'gpt-4o-mini'
+  condition_model: 'gpt-4.1-mini'
 
 example_management:
   index_name: "examples"
@@ -96,7 +96,7 @@ redis:
   ssl: false
 
 fixsql_agent:
-  model: "gpt-4o-mini"
+  model: "gpt-4.1-mini"
   frequency_penalty: 0
   n: 1
   presence_penalty: 0
@@ -105,7 +105,7 @@ fixsql_agent:
   max_completion_tokens: 4096
 
 answer_generator:
-  model: "gpt-4o-mini"
+  model: "gpt-4.1-mini"
   frequency_penalty: 0
   n: 1
   presence_penalty: 0
@@ -128,7 +128,7 @@ autocorrector:
 memory_updater:
   recent_messages: 3
   conversation_summarizer:
-    model: "gpt-4o-mini"
+    model: "gpt-4.1-mini"
     frequency_penalty: 0
     n: 1
     presence_penalty: 0
@@ -137,7 +137,7 @@ memory_updater:
     max_completion_tokens: 1024
 
   conversation_title_generator:
-    model: "gpt-4o-mini"
+    model: "gpt-4.1-mini"
     frequency_penalty: 0
     n: 1
     presence_penalty: 0

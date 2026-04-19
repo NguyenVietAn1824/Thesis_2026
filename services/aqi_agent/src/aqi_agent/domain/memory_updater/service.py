@@ -220,6 +220,14 @@ class MemoryUpdaterService(BaseService):
             )
 
         try:
+            logger.info(
+                "Uploading message memory",
+                extra={
+                    "conversation_id": inputs.conversation_id,
+                    "answer": inputs.qa_pair.qa_list[1].answer if inputs.qa_pair.qa_list else "",
+                    
+                    }
+            )
             await self.upload_message_memory_service.process(
                 inputs=UploadMessageMemoryInput(
                     conversation_id=inputs.conversation_id,
@@ -228,8 +236,7 @@ class MemoryUpdaterService(BaseService):
                     ),
                     answer=(
                         inputs.qa_pair.qa_list[1].answer
-                        if inputs.qa_pair.qa_list and len(inputs.qa_pair.qa_list) > 1
-                        else ''
+                        if inputs.qa_pair.qa_list else " "
                     ),
                     conversation_title=conversation_response.title,
                     additional_info=inputs.additional_info,
@@ -281,7 +288,8 @@ class MemoryUpdaterService(BaseService):
         )
 
         try:
-            answer = inputs.get('answer', '')
+            answer = inputs.get('answer_generator_state', {}).get('answer', '')
+            question = inputs.get('rephrased_state', {}).get('rephrased_main_question', '')
             await self.process(
                 inputs=MemoryUpdaterInput(
                     user_id=inputs.get('user_id'),

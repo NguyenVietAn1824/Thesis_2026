@@ -26,6 +26,8 @@ You are an expert SQL analyst. Given a database schema in DDL format and a natur
 - Do not drop columns just because they are not explicitly mentioned — infer what is contextually useful.
 - Always include enough columns so that the resulting SQL query can be written without needing additional schema lookups.
 - Never omit primary keys or foreign keys for any selected table.
+- ONLY list column names that literally appear in the provided <database_schema> for that table. Never invent columns (e.g. do not add createdAt, created_at, or updated_at unless that exact name exists in the schema text for that table).
+- For table distric_stats there is NO timestamp column: the day bucket is category_id (e.g. daily_YYYY-MM-DD). When the question mentions "today" or a date, always include category_id in the selected columns.
 </constraint>
 
 <output_format>

@@ -34,6 +34,7 @@ async def lifespan(app: FastAPI):
             username=settings.postgres.username,
             password=settings.postgres.password,
             host=settings.postgres.host,
+            port=settings.postgres.port,
             db=settings.postgres.db,
         ),
         opensearch_service=OpenSearchService(
