@@ -179,6 +179,9 @@ cython_debug/
 # IDE
 .idea
 
+.node_modules
+
+
 # Database dumps
 *.sql
 
